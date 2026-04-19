@@ -6,6 +6,7 @@
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "npx ng build --configuration production && cd backend && npm install",
+    "seed:render": "node -e \"const fs=require('fs'),p=require('path');const d=p.join(__dirname,'backend','data');fs.mkdirSync(d,{recursive:true});const src=p.join(__dirname,'backend','database.db');const dst=p.join(d,'database.db');if(!fs.existsSync(dst)&&fs.existsSync(src)){fs.copyFileSync(src,dst);console.log('Seeded database.db')}else{console.log('DB exists or no seed')};const su=p.join(__dirname,'backend','uploads');const du=p.join(d,'uploads');if(!fs.existsSync(du))fs.mkdirSync(du,{recursive:true});if(fs.existsSync(su)){fs.readdirSync(su).forEach(f=>{if(f==='.gitkeep')return;const s2=p.join(su,f),d2=p.join(du,f);if(!fs.existsSync(d2)){fs.copyFileSync(s2,d2);console.log('Seeded',f)}})}\"",
     "start:render": "node backend/server.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

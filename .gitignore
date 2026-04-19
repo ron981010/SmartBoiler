@@ -21,13 +21,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Database (will be created at runtime)
-backend/database.db
-
-# Uploads (user content, created at runtime)
-# backend/uploads/ is kept but contents ignored
-backend/uploads/*
-!backend/uploads/.gitkeep
+# Uploads (user content, created at runtime on Render disk)
+# Keep local uploads in repo for initial seed
+backend/data/
 
 # Misc
 *.csv

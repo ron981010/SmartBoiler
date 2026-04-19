@@ -190,7 +190,7 @@ export class CompanyFichaComponent implements OnInit, OnDestroy {
   }
 
   onImageSelected(event: any) {
-    if (!this.isEditing) {
+    if (!this.isEditing && this.ficha) {
       return;
     }
 
@@ -271,12 +271,21 @@ export class CompanyFichaComponent implements OnInit, OnDestroy {
       image_path: formValues.image_path ? (formValues.image_path.startsWith('data:') ? `[base64 image - ${(formValues.image_path.length / 1024).toFixed(2)}KB]` : formValues.image_path) : '[empty]'
     });
 
+    const isNewFicha = !this.ficha;
+
     this.companyFichaService.saveCompanyFicha(formValues)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
           this.loading = false;
           
+          // If first time creating, go to dashboard
+          if (isNewFicha) {
+            console.log('✓ Company ficha created, navigating to dashboard');
+            this.router.navigate(['/dashboard']);
+            return;
+          }
+
           // Reload ficha to get the saved data from server
           this.companyFichaService.getCompanyFicha()
             .pipe(takeUntil(this.destroy$))
