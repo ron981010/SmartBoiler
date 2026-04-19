@@ -27,6 +27,33 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
+// Seed database and uploads from repo on first run (production only)
+if (process.env.NODE_ENV === 'production') {
+  const seedDb = path.join(__dirname, 'database.db');
+  if (fs.existsSync(seedDb)) {
+    const seedSize = fs.statSync(seedDb).size;
+    const destSize = fs.existsSync(DB_PATH) ? fs.statSync(DB_PATH).size : 0;
+    // Copy if destination doesn't exist or seed is larger (has more data)
+    if (!fs.existsSync(DB_PATH) || seedSize > destSize) {
+      fs.copyFileSync(seedDb, DB_PATH);
+      console.log('Seeded database.db from repo (' + seedSize + ' bytes, was ' + destSize + ')');
+    } else {
+      console.log('DB already exists (' + destSize + ' bytes), seed is ' + seedSize + ' bytes - keeping existing');
+    }
+  }
+  const seedUploads = path.join(__dirname, 'uploads');
+  if (fs.existsSync(seedUploads)) {
+    fs.readdirSync(seedUploads).forEach(f => {
+      if (f === '.gitkeep') return;
+      const dest = path.join(UPLOADS_DIR, f);
+      if (!fs.existsSync(dest)) {
+        fs.copyFileSync(path.join(seedUploads, f), dest);
+        console.log('Seeded upload:', f);
+      }
+    });
+  }
+}
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
