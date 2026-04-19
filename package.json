@@ -5,9 +5,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
-    "build": "ng build --configuration production",
-    "build:render": "npm install && npm run build && cd backend && npm install",
-    "start:render": "cd backend && node server.js",
+    "build": "npx ng build --configuration production && cd backend && npm install",
+    "start:render": "node backend/server.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
