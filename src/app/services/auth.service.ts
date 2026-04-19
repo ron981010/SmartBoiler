@@ -50,6 +50,13 @@ export class AuthService {
   }
 
   /**
+   * Reset password (test mode)
+   */
+  resetPassword(email: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, { email, newPassword });
+  }
+
+  /**
    * Register new user
    */
   signup(credentials: SignupRequest): Observable<AuthResponse> {

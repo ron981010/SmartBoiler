@@ -286,6 +286,36 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
+// Reset Password (test mode - no email verification)
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ error: 'Email and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Find user
+    const user = await dbGet('SELECT * FROM users WHERE email = ?', [email]);
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with that email' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await dbRun('UPDATE users SET password = ? WHERE email = ?', [hashedPassword, email]);
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {

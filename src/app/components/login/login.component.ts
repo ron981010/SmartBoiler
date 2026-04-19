@@ -13,8 +13,11 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LoginComponent {
   loginForm!: FormGroup;
+  resetForm!: FormGroup;
   loading = false;
   error: string | null = null;
+  successMsg: string | null = null;
+  showReset = false;
 
   constructor(
     private fb: FormBuilder,
@@ -28,6 +31,36 @@ export class LoginComponent {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+    this.resetForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  toggleReset() {
+    this.showReset = !this.showReset;
+    this.error = null;
+    this.successMsg = null;
+  }
+
+  onReset() {
+    if (this.resetForm.invalid) return;
+    this.loading = true;
+    this.error = null;
+    this.successMsg = null;
+    const { email, newPassword } = this.resetForm.value;
+    this.authService.resetPassword(email, newPassword).subscribe({
+      next: () => {
+        this.loading = false;
+        this.successMsg = 'Contraseña actualizada. Ya puedes iniciar sesión.';
+        this.showReset = false;
+        this.loginForm.patchValue({ email });
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err?.error?.error || 'Error al restablecer la contraseña.';
+      }
     });
   }
 

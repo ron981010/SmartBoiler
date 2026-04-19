@@ -8,15 +8,21 @@
       <h1 class="title">Smart<span class="bold">Boiler</span></h1>
     </div>
 
-    <div class="subtitle">Inicio de Sesión - Bienvenido!</div>
+    <div class="subtitle" *ngIf="!showReset">Inicio de Sesión - Bienvenido!</div>
+    <div class="subtitle" *ngIf="showReset">Restablecer Contraseña</div>
 
     <!-- Error Message -->
     <div class="error-message" *ngIf="error">
       <span>{{ error }}</span>
     </div>
 
+    <!-- Success Message -->
+    <div class="success-message" *ngIf="successMsg">
+      <span>{{ successMsg }}</span>
+    </div>
+
     <!-- Login Form -->
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form">
+    <form *ngIf="!showReset" [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form">
       <!-- Email Field -->
       <div class="form-group">
         <label class="form-label">Email</label>
@@ -54,13 +60,53 @@
       </button>
     </form>
 
+    <!-- Reset Password Form -->
+    <form *ngIf="showReset" [formGroup]="resetForm" (ngSubmit)="onReset()" class="form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="ejemplo@email.com"
+          [class.input-error]="resetForm.get('email')?.invalid && resetForm.get('email')?.touched"
+        />
+        <small class="error-text" *ngIf="resetForm.get('email')?.invalid && resetForm.get('email')?.touched">
+          Email inválido
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nueva Contraseña</label>
+        <input
+          type="password"
+          formControlName="newPassword"
+          class="form-input"
+          placeholder="••••••••"
+          [class.input-error]="resetForm.get('newPassword')?.invalid && resetForm.get('newPassword')?.touched"
+        />
+        <small class="error-text" *ngIf="resetForm.get('newPassword')?.invalid && resetForm.get('newPassword')?.touched">
+          Mínimo 6 caracteres
+        </small>
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading || resetForm.invalid">
+        <span *ngIf="!loading">Cambiar Contraseña</span>
+        <span *ngIf="loading">Cargando...</span>
+      </button>
+
+      <button type="button" class="btn-secondary" (click)="toggleReset()">
+        Volver al Login
+      </button>
+    </form>
+
     <!-- Divider -->
-    <div class="divider">
+    <div class="divider" *ngIf="!showReset">
       <span>O accede con</span>
     </div>
 
     <!-- Social Login Buttons -->
-    <div class="social-buttons">
+    <div class="social-buttons" *ngIf="!showReset">
       <button class="social-btn twitter" (click)="socialLogin('twitter')" title="Twitter">
         <span>𝕏</span> Twitter
       </button>
@@ -71,8 +117,8 @@
 
     <!-- Links -->
     <div class="footer-links">
-      <p class="forgot-password">
-        <a href="#">¿Olvidó su clave?</a>
+      <p class="forgot-password" *ngIf="!showReset">
+        <a (click)="toggleReset()" class="link-button">¿Olvidó su clave?</a>
       </p>
       <p class="signup-link">
         ¿Aún no tiene cuenta?
