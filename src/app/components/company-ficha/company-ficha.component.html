@@ -1,0 +1,161 @@
+<div class="company-ficha-container">
+  <!-- Header -->
+  <div class="ficha-header">
+    <h1>Ficha de empresa</h1>
+    <button class="edit-btn" *ngIf="!isEditing && ficha" (click)="onEdit()" title="Editar empresa">
+      <img src="assets/edit button.jpg" alt="Editar" class="edit-icon"/>
+    </button>
+    <button class="header-cancel-btn" *ngIf="isEditing && ficha" (click)="onCancel()">Cancelar</button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoadingData">
+    <p>Cargando información...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="form" class="company-form" *ngIf="!isLoadingData">
+    <!-- Empresa -->
+    <div class="form-section">
+      <label>Empresa <span class="required">*</span></label>
+      <input type="text" formControlName="empresa" placeholder="Ej: Industrias Palma del Espino" />
+    </div>
+
+    <!-- CIIU -->
+    <div class="form-section">
+      <label>CIIU <span class="required">*</span></label>
+      <select formControlName="ciiu" class="ciiu-select">
+        <option value="">Selecciona un CIIU</option>
+        <option *ngFor="let item of ciuuOptions" [value]="item.code">
+          {{ item.code }} - {{ item.description }}
+        </option>
+      </select>
+      <p class="ciiu-help" *ngIf="form.get('ciiu')?.value">
+        Seleccionado: {{ form.get('ciiu')?.value }}
+      </p>
+    </div>
+
+    <!-- Oficina Principal (Dirección expandida) -->
+    <div class="form-section">
+      <label>Oficina Principal <span class="required">*</span></label>
+      <p class="label-subtitle">Avenida / Calle</p>
+      <div class="address-row">
+        <select formControlName="avenue" class="avenue-select">
+          <option value="">Tipo...</option>
+          <option value="Av.">Av.</option>
+          <option value="Calle">Calle</option>
+          <option value="Jr.">Jr.</option>
+          <option value="Psj.">Psj.</option>
+          <option value="Pza.">Pza.</option>
+          <option value="Mz.">Mz.</option>
+        </select>
+        <input type="text" formControlName="avenue_number" placeholder="Número" class="avenue-number" />
+      </div>
+    </div>
+
+    <!-- Distrito -->
+    <div class="form-section">
+      <label>Distrito <span class="required">*</span></label>
+      <input type="text" formControlName="district" placeholder="Ej: San Juan de Miraflores" />
+    </div>
+
+    <!-- Departamento y Provincia (Reordenados) -->
+    <div class="form-row">
+      <div class="form-section">
+        <label>Departamento <span class="required">*</span></label>
+        <select formControlName="department" class="department-select">
+          <option *ngFor="let dept of departments" [value]="dept">
+            {{ dept }}
+          </option>
+        </select>
+      </div>
+      <div class="form-section">
+        <label>Provincia <span class="required">*</span></label>
+        <select formControlName="province" class="province-select">
+          <option *ngFor="let prov of filteredProvinces" [value]="prov">
+            {{ prov }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Página Web -->
+    <div class="form-section">
+      <label>Página Web</label>
+      <input type="url" formControlName="website" placeholder="https://www.ejemplo.com" />
+    </div>
+
+    <!-- Imagen -->
+    <div class="form-section">
+      <label>Imagen de empresa</label>
+      <div class="image-upload-container">
+        <!-- Image Preview -->
+        <div class="image-preview" *ngIf="imagePreview">
+          <img [src]="imagePreview" alt="Company image preview" />
+          <!-- Delete button only shows when editing -->
+          <button 
+            type="button" 
+            class="clear-image-btn" 
+            (click)="deleteImage()"
+            *ngIf="isEditing"
+            [disabled]="loading"
+          >
+            ✕ Eliminar imagen
+          </button>
+        </div>
+
+        <!-- Upload placeholder - only show when editing -->
+        <div class="image-placeholder" *ngIf="!imagePreview && isEditing">
+          <label class="image-upload-label">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+            </svg>
+            <span>Selecciona una imagen</span>
+            <input 
+              type="file" 
+              accept="image/*" 
+              (change)="onImageSelected($event)"
+              class="image-input"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <!-- Si NO hay ficha y NO está editando: botón Guardar para crear -->
+      <button 
+        type="button" 
+        class="save-btn" 
+        (click)="onSave()" 
+        *ngIf="!ficha && !isEditing"
+        [disabled]="loading || form.invalid"
+        [class.loading]="loading"
+      >
+        <span *ngIf="!loading">💾 Guardar</span>
+        <span *ngIf="loading">Guardando...</span>
+      </button>
+      
+      <button type="button" class="back-btn-action" (click)="goBack()">← Atrás</button>
+
+      <!-- Si SÍ está editando: Guardar cambios -->
+      <button 
+        type="button" 
+        class="save-btn" 
+        (click)="onSave()" 
+        *ngIf="isEditing" 
+        [disabled]="loading || form.invalid"
+        [class.loading]="loading"
+      >
+        <span *ngIf="!loading">💾 Guardar cambios</span>
+        <span *ngIf="loading">Guardando...</span>
+      </button>
+    </div>
+  </form>
+</div>

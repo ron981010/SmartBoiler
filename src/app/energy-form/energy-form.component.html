@@ -1,0 +1,1170 @@
+<ng-container *ngIf="!evaluationMode">
+  <div class="form-root" *ngIf="currentScreen === 1">
+    <h2 class="title">Caldero</h2>
+
+    <div class="tabs-grid">
+      <button class="tab" [class.active]="currentScreen===1" (click)="goToScreen(1)">Caldero</button>
+      <button class="tab" [class.active]="currentScreen===2" (click)="goToScreen(2)">Combustible/Aire</button>
+      <button class="tab" [class.active]="currentScreen===3" (click)="goToScreen(3)">Agua/Vapor</button>
+      <button class="tab" [class.active]="currentScreen===4" (click)="goToScreen(4)">Costo</button>
+      <button class="tab" [class.active]="currentScreen===5" (click)="goToScreen(5)">Gases</button>
+      <button class="tab" [class.active]="currentScreen===6" (click)="goToScreen(6)">Temperatura</button>
+    </div>
+
+    <div class="company-lines">
+      <div class="company-line">{{ companyName || '—' }}</div>
+      <div class="company-line plant-line">
+        <select class="plant-select" [(ngModel)]="selectedPlantId">
+          <option [ngValue]="null">Todas las plantas</option>
+          <option *ngFor="let p of plants" [ngValue]="p.id">{{p.nombre}}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="caldera-search">
+      <label class="caldera-label">Caldera</label>
+      <div class="search-box">
+        <input class="search-input" placeholder="Buscar..." [(ngModel)]="searchQuery" />
+        <span class="search-icon">🔍</span>
+      </div>
+    </div>
+
+    <div class="boiler-list">
+      <div class="boiler-item" *ngFor="let c of filteredCalderas">
+        <img [src]="c.img" alt="caldera" class="boiler-img" />
+        <div class="boiler-name">{{c.name}}</div>
+        <label class="checkbox-wrap" [class.selected]="c.selected" (click)="toggleCalderaSelection(c.id)">
+          <input type="checkbox" [checked]="c.selected" />
+          <span class="checkmark">✓</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="operation-time-inline">
+      <div class="op-label">Tiempo de Operación</div>
+      <div class="op-time">
+        <div class="op-time-box">
+          <input type="number" [formControl]="operationTimeControl" class="time-input" />
+        </div>
+        <div class="op-unit">h/año</div>
+      </div>
+    </div>
+
+    <div class="continue-wrap">
+      <button class="continue-back-btn" (click)="backToDashboard()">Atrás</button>
+      <button class="btn btn-primary continue-btn" (click)="nextScreen()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- Segunda Pantalla: Combustible-Aire -->
+  <div class="form-root" *ngIf="currentScreen === 2">
+    <h2 class="title">Combustible-Aire</h2>
+    <!-- misma navegación superior -->
+    <div class="tabs-grid">
+      <button class="tab" [class.active]="currentScreen===1" (click)="goToScreen(1)">Caldero</button>
+      <button class="tab" [class.active]="currentScreen===2" (click)="goToScreen(2)">Combustible/Aire</button>
+      <button class="tab" [class.active]="currentScreen===3" (click)="goToScreen(3)">Agua/Vapor</button>
+      <button class="tab" [class.active]="currentScreen===4" (click)="goToScreen(4)">Costo</button>
+      <button class="tab" [class.active]="currentScreen===5" (click)="goToScreen(5)">Gases</button>
+      <button class="tab" [class.active]="currentScreen===6" (click)="goToScreen(6)">Temperatura</button>
+    </div>
+    <div class="selected-caldera">{{ selectedCalderaName }}</div>
+
+    <div class="group-label">Combustible</div>
+    <div class="data-row">
+      <span class="row-label">Precio</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I35" />
+      <span class="row-unit">US$/106 Btu</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Consumo</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I9" />
+      <select class="data-select" [(ngModel)]="dataFields.I9Unit">
+        <option *ngFor="let u of fields[1].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Temperatura</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I10" />
+      <select class="data-select" [(ngModel)]="dataFields.I10Unit">
+        <option *ngFor="let u of fields[3].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+
+    <div class="group-label">Aire</div>
+    <div class="data-row">
+      <span class="row-label">Temperatura</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I11" />
+      <select class="data-select" [(ngModel)]="dataFields.I11Unit">
+        <option *ngFor="let u of fields[3].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Humedad Relativa</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I12" />
+      <span class="data-unit">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Velocidad</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I13" />
+      <span class="data-unit">m/s</span>
+    </div>
+
+    <!-- Botónes de Navegación -->
+    <div class="navigation-buttons">
+      <button class="nav-btn nav-btn-prev" (click)="prevScreen()"><span class="btn-arrow">◀</span><span
+          class="btn-text">
+          Atrás</span></button>
+      <button class="nav-btn nav-btn-center" (click)="clearCurrentScreen()">Borrar</button>
+      <button class="nav-btn nav-btn-next" (click)="nextScreen()"><span class="btn-text">Siguiente </span><span
+          class="btn-arrow">▶</span></button>
+    </div>
+  </div>
+
+  <!-- Cuarta Pantalla: Costo -->
+  <div class="form-root" *ngIf="currentScreen === 4">
+    <h2 class="title">Costo</h2>
+    <div class="tabs-grid">
+      <button class="tab" [class.active]="currentScreen===1" (click)="goToScreen(1)">Caldero</button>
+      <button class="tab" [class.active]="currentScreen===2" (click)="goToScreen(2)">Combustible/Aire</button>
+      <button class="tab" [class.active]="currentScreen===3" (click)="goToScreen(3)">Agua/Vapor</button>
+      <button class="tab" [class.active]="currentScreen===4" (click)="goToScreen(4)">Costo</button>
+      <button class="tab" [class.active]="currentScreen===5" (click)="goToScreen(5)">Gases</button>
+      <button class="tab" [class.active]="currentScreen===6" (click)="goToScreen(6)">Temperatura</button>
+    </div>
+    <div class="selected-caldera">{{ selectedCalderaName }}</div>
+
+    <!-- encabezado de sección con slider -->
+    <div class="header-row">
+      <span class="section-label">Costo del vapor</span>
+      <div class="toggle-row">
+        <label class="switch">
+          <input type="checkbox" [(ngModel)]="costEditable" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="cost-table">
+      <div class="data-row" *ngFor="let item of costItems">
+        <span class="row-label">{{item.label}}</span>
+        <input type="number" class="data-input" [(ngModel)]="item.value" [readonly]="!costEditable" />
+        <span class="data-unit">%</span>
+      </div>
+      <div class="data-row total-row">
+        <strong class="row-label">Total</strong>
+        <strong class="row-value">{{ getCostTotal() | number:'1.1-1' }}%</strong>
+      </div>
+    </div>
+
+    <div class="navigation-buttons">
+      <button class="nav-btn nav-btn-prev" (click)="prevScreen()"><span class="btn-arrow">◀</span><span
+          class="btn-text">
+          Atrás</span></button>
+      <button class="nav-btn nav-btn-center" (click)="clearCurrentScreen()">Borrar</button>
+      <button class="nav-btn nav-btn-next" (click)="nextScreen()"><span class="btn-text">Siguiente </span><span
+          class="btn-arrow">▶</span></button>
+    </div>
+  </div>
+  <!-- Tercera Pantalla: Datos Operativos -->
+  <div class="form-root" *ngIf="currentScreen === 3">
+    <h2 class="title">Agua-Vapor</h2>
+    <div class="tabs-grid">
+      <button class="tab" [class.active]="currentScreen===1" (click)="goToScreen(1)">Caldero</button>
+      <button class="tab" [class.active]="currentScreen===2" (click)="goToScreen(2)">Combustible/Aire</button>
+      <button class="tab" [class.active]="currentScreen===3" (click)="goToScreen(3)">Agua/Vapor</button>
+      <button class="tab" [class.active]="currentScreen===4" (click)="goToScreen(4)">Costo</button>
+      <button class="tab" [class.active]="currentScreen===5" (click)="goToScreen(5)">Gases</button>
+      <button class="tab" [class.active]="currentScreen===6" (click)="goToScreen(6)">Temperatura</button>
+    </div>
+    <div class="selected-caldera">{{ selectedCalderaName }}</div>
+
+    <div class="section-label">Agua</div>
+    <div class="data-row">
+      <span class="row-label">Temp. (alim)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I14" />
+      <select class="data-select" [(ngModel)]="dataFields.I14Unit">
+        <option *ngFor="let u of fields[3].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+    <div class="data-row">
+      <span class="row-label">STD (alim)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I15" />
+      <span class="data-unit">ppm</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">STD (purga)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I16" />
+      <span class="data-unit">ppm</span>
+    </div>
+
+    <div class="section-label">Vapor</div>
+    <div class="data-row">
+      <span class="row-label">Tipo</span>
+      <select class="data-select" [(ngModel)]="dataFields.vaporType">
+        <option value="saturado">Saturado</option>
+        <option value="sobrecalentado">Sobrecalentado</option>
+      </select>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Presión</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I17" />
+      <select class="data-select" [(ngModel)]="dataFields.I17Unit">
+        <option *ngFor="let u of fields[2].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+    <div *ngIf="dataFields.vaporType === 'sobrecalentado'" class="data-row">
+      <span class="row-label">Temperatura</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I18" />
+      <select class="data-select" [(ngModel)]="dataFields.I18Unit">
+        <option *ngFor="let u of fields[3].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+
+    <div class="navigation-buttons">
+      <button class="nav-btn nav-btn-prev" (click)="prevScreen()"><span class="btn-arrow">◀</span><span
+          class="btn-text">
+          Atrás</span></button>
+      <button class="nav-btn nav-btn-center" (click)="clearCurrentScreen()">Borrar</button>
+      <button class="nav-btn nav-btn-next" (click)="nextScreen()"><span class="btn-text">Siguiente </span><span
+          class="btn-arrow">▶</span></button>
+    </div>
+  </div>
+
+  <!-- Gases Pantalla -->
+  <div class="form-root" *ngIf="currentScreen === 5">
+    <h2 class="title">Gases</h2>
+    <div class="tabs-grid">
+      <button class="tab" [class.active]="currentScreen===1" (click)="goToScreen(1)">Caldero</button>
+      <button class="tab" [class.active]="currentScreen===2" (click)="goToScreen(2)">Combustible/Aire</button>
+      <button class="tab" [class.active]="currentScreen===3" (click)="goToScreen(3)">Agua/Vapor</button>
+      <button class="tab" [class.active]="currentScreen===4" (click)="goToScreen(4)">Costo</button>
+      <button class="tab" [class.active]="currentScreen===5" (click)="goToScreen(5)">Gases</button>
+      <button class="tab" [class.active]="currentScreen===6" (click)="goToScreen(6)">Temperatura</button>
+    </div>
+    <div class="selected-caldera">{{ selectedCalderaName }}</div>
+
+    <div class="section-label">Gases de Chimenea</div>
+    <div class="data-row">
+      <span class="row-label">Temperatura</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I21" />
+      <select class="data-select" [(ngModel)]="dataFields.I21Unit">
+        <option *ngFor="let u of fields[3].unitOptions" [value]="u">{{u}}</option>
+      </select>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Oxígeno (O2)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I19" />
+      <span class="data-unit">%</span>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Monóxido (CO)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I20" />
+      <span class="data-unit">ppm</span>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Índice de Bacharach</span>
+      <select class="data-select" [(ngModel)]="dataFields.I22">
+        <option [value]="0">0</option>
+        <option [value]="1">1</option>
+        <option [value]="2">2</option>
+        <option [value]="3">3</option>
+        <option [value]="4">4</option>
+        <option [value]="5">5</option>
+      </select>
+    </div>
+
+    <div class="navigation-buttons">
+      <button class="nav-btn nav-btn-prev" (click)="prevScreen()"><span class="btn-arrow">◀</span><span
+          class="btn-text">Atrás</span></button>
+      <button class="nav-btn nav-btn-center" (click)="clearCurrentScreen()">Borrar</button>
+      <button class="nav-btn nav-btn-next" (click)="nextScreen()"><span class="btn-text">Siguiente </span><span
+          class="btn-arrow">▶</span></button>
+    </div>
+  </div>
+
+  <!-- Temperatura Pantalla -->
+  <div class="form-root" *ngIf="currentScreen === 6">
+    <h2 class="title">Temperatura</h2>
+    <div class="tabs-grid">
+      <button class="tab" [class.active]="currentScreen===1" (click)="goToScreen(1)">Caldero</button>
+      <button class="tab" [class.active]="currentScreen===2" (click)="goToScreen(2)">Combustible/Aire</button>
+      <button class="tab" [class.active]="currentScreen===3" (click)="goToScreen(3)">Agua/Vapor</button>
+      <button class="tab" [class.active]="currentScreen===4" (click)="goToScreen(4)">Costo</button>
+      <button class="tab" [class.active]="currentScreen===5" (click)="goToScreen(5)">Gases</button>
+      <button class="tab" [class.active]="currentScreen===6" (click)="goToScreen(6)">Temperatura</button>
+    </div>
+    <div class="selected-caldera">{{ selectedCalderaName }}</div>
+
+    <div class="section-label-with-info">
+      <div class="section-label">Cilindrico Horizontal</div>
+      <button class="info-btn" (click)="goToScreen(7)" title="Ver detalles de temperatura">ⓘ</button>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Temp. frontal (Tf)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I23" />
+      <span class="data-unit">°C</span>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Temp. lat. Der. (Td)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I24" />
+      <span class="data-unit">°C</span>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Temp. posterior (Tp)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I25" />
+      <span class="data-unit">°C</span>
+    </div>
+
+    <div class="data-row">
+      <span class="row-label">Temp. lat. izq. (Ti)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I26" />
+      <span class="data-unit">°C</span>
+    </div>
+
+    <div class="navigation-buttons-vertical">
+      <button class="nav-btn nav-btn-full" (click)="evaluateData()">Evaluar</button>
+    </div>
+    <div class="navigation-buttons">
+      <button class="nav-btn nav-btn-prev" (click)="prevScreen()"><span class="btn-arrow">◀</span><span
+          class="btn-text">Atrás</span></button>
+      <button class="nav-btn nav-btn-center" (click)="clearCurrentScreen()">Borrar</button>
+      <button class="nav-btn nav-btn-next" (click)="nextScreen()"><span class="btn-text">Siguiente </span><span
+          class="btn-arrow">▶</span></button>
+    </div>
+  </div>
+
+  <!-- Temperatura Detalles Pantalla -->
+  <div class="form-root" *ngIf="currentScreen === 7">
+    <h2 class="title">Temperatura Detallada</h2>
+
+    <div class="temp-details-container">
+      <div class="temp-detail-section">
+        <div class="temp-detail-title">Pared frontal</div>
+        <div class="temp-detail-formula">Tf = (I23+I24+I25+I26)/4</div>
+        <div class="temp-gauge">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <!-- Círculo externo -->
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#e0e0e0" stroke-width="2" />
+            <!-- Líneas divisoras (cruz) -->
+            <line x1="60" y1="10" x2="60" y2="110" stroke="#d1d5db" stroke-width="1" />
+            <line x1="10" y1="60" x2="110" y2="60" stroke="#d1d5db" stroke-width="1" />
+            <!-- Números en los 4 cuadrantes (coordenadas del usuario) -->
+            <text x="40" y="45" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">1</text>
+            <text x="80" y="45" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">2</text>
+            <text x="40" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">3</text>
+            <text x="80" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">4</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="temp-detail-section">
+        <div class="temp-detail-title">Pared lateral derecha</div>
+        <div class="temp-detail-formula">Td = (I24+I25+I26+I23)/4</div>
+        <div class="temp-grid">
+          <div class="grid-cell">5</div>
+          <div class="grid-cell">6</div>
+          <div class="grid-cell">7</div>
+          <div class="grid-cell">8</div>
+          <div class="grid-cell">9</div>
+          <div class="grid-cell">10</div>
+        </div>
+      </div>
+
+      <div class="temp-detail-section">
+        <div class="temp-detail-title">Pared posterior</div>
+        <div class="temp-detail-formula">Tp = (I25+I26+I23+I24)/4</div>
+        <div class="temp-gauge">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <!-- Círculo externo -->
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#e0e0e0" stroke-width="2" />
+            <!-- Líneas divisoras (cruz) -->
+            <line x1="60" y1="10" x2="60" y2="110" stroke="#d1d5db" stroke-width="1" />
+            <line x1="10" y1="60" x2="110" y2="60" stroke="#d1d5db" stroke-width="1" />
+            <!-- Números en los 4 cuadrantes (coordenadas del usuario) -->
+            <text x="40" y="45" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">11</text>
+            <text x="80" y="45" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">12</text>
+            <text x="40" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">13</text>
+            <text x="80" y="85" text-anchor="middle" font-size="14" font-weight="bold" fill="#397ecb">14</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="temp-detail-section">
+        <div class="temp-detail-title">Pared lateral izquierda</div>
+        <div class="temp-detail-formula">Ti = (I26+I23+I24+I25)/4</div>
+        <div class="temp-grid">
+          <div class="grid-cell">15</div>
+          <div class="grid-cell">18</div>
+          <div class="grid-cell">17</div>
+          <div class="grid-cell">18</div>
+          <div class="grid-cell">19</div>
+          <div class="grid-cell">20</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="navigation-buttons">
+      <button class="nav-btn nav-btn-prev" (click)="prevScreen()"><span class="btn-arrow">◀</span></button>
+    </div>
+  </div>
+
+</ng-container>
+
+<!-- RESULTS SCREEN -->
+<!-- charts-only view (visible after evaluation when user requests graphs) -->
+<div class="form-root" *ngIf="evaluationMode && showCharts && evaluationResults">
+  <h2 class="title">{{ activeResultsTab === 'COM' ? 'Combustión' : activeResultsTab === 'PRO' ? 'Producción' : activeResultsTab === 'EFI' ? 'Eficiencia' : activeResultsTab === 'BMS' ? 'B. Materia' : activeResultsTab === 'BEN' ? 'B. Energía' : 'Emisiones' }}</h2>
+  <div class="selected-caldera">{{ selectedCalderaName }}</div>
+
+  <div class="results-charts">
+    <ng-container *ngIf="activeResultsTab === 'COM'">
+    <h3 style="margin: 0 0 12px 0; font-weight: 600; color: #0c4a6e; font-size: 14px; align-self: flex-start; width: 100%; text-align: center;">Combustión</h3>
+
+    <div class="charts-row">
+      <div class="chart-gauge-container">
+        <svg width="200" height="200" viewBox="0 0 200 200" class="gauge-chart blue-gauge">
+          <!-- Arco de fondo: 0% izquierda → 100% derecha por la parte inferior -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#e0e0e0" stroke-width="30" opacity="0.3" stroke-dasharray="251.3 251.3" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Arco azul (60% visualizado) -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#6ba3f5" stroke-width="30" stroke-dasharray="150.8 502.6" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Texto: encima del arco -->
+          <text x="100" y="72" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Exceso de aire</text>
+          <text x="100" y="96" text-anchor="middle" font-size="18" font-weight="bold" fill="#397ecb">15</text>
+          <text x="100" y="113" text-anchor="middle" font-size="13" fill="#666">%</text>
+        </svg>
+      </div>
+
+      <div class="chart-gauge-container">
+        <svg width="200" height="200" viewBox="0 0 200 200" class="gauge-chart red-gauge">
+          <!-- Arco de fondo: 0% izquierda → 100% derecha por la parte inferior -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#e0e0e0" stroke-width="30" opacity="0.3" stroke-dasharray="251.3 251.3" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Arco rojo (85% visualizado) -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#ff6b6b" stroke-width="30" stroke-dasharray="213.6 502.6" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Texto: encima del arco -->
+          <text x="100" y="62" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Grado de</text>
+          <text x="100" y="79" text-anchor="middle" font-size="14" font-weight="600" fill="#333">conversión</text>
+          <text x="100" y="99" text-anchor="middle" font-size="18" font-weight="bold" fill="#ff6b6b">85</text>
+          <text x="100" y="115" text-anchor="middle" font-size="13" fill="#666">%</text>
+        </svg>
+      </div>
+    </div>
+    </ng-container>
+
+    <ng-container *ngIf="activeResultsTab === 'PRO'">
+    <h3 style="margin: 16px 0 12px 0; font-weight: 600; color: #0c4a6e; font-size: 14px; align-self: flex-start; width: 100%; text-align: center;">Producción</h3>
+
+    <div class="charts-row">
+      <div class="chart-gauge-container">
+        <svg width="200" height="200" viewBox="0 0 200 200" class="gauge-chart blue-gauge">
+          <!-- Arco de fondo: 0% izquierda → 100% derecha por la parte inferior -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#e0e0e0" stroke-width="30" opacity="0.3" stroke-dasharray="251.3 251.3" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Arco azul (75% visualizado) -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#6ba3f5" stroke-width="30" stroke-dasharray="188.5 502.6" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Texto: encima del arco -->
+          <text x="100" y="62" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Factor de</text>
+          <text x="100" y="79" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Carga</text>
+          <text x="100" y="99" text-anchor="middle" font-size="18" font-weight="bold" fill="#397ecb">75</text>
+          <text x="100" y="115" text-anchor="middle" font-size="13" fill="#666">%</text>
+        </svg>
+      </div>
+
+      <div class="chart-gauge-container">
+        <svg width="200" height="200" viewBox="0 0 200 200" class="gauge-chart red-gauge">
+          <!-- Arco de fondo: 0% izquierda → 100% derecha por la parte inferior -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#e0e0e0" stroke-width="30" opacity="0.3" stroke-dasharray="251.3 251.3" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Arco rojo (68% visualizado) -->
+          <circle cx="100" cy="100" r="80" fill="none" stroke="#ff6b6b" stroke-width="30" stroke-dasharray="170.9 502.6" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+          <!-- Texto: encima del arco -->
+          <text x="100" y="62" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Factor de</text>
+          <text x="100" y="79" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Evaporación</text>
+          <text x="100" y="99" text-anchor="middle" font-size="18" font-weight="bold" fill="#ff6b6b">8.5</text>
+          <text x="100" y="115" text-anchor="middle" font-size="13" fill="#666"></text>
+        </svg>
+      </div>
+    </div>
+    </ng-container>
+
+    <ng-container *ngIf="activeResultsTab === 'EFI'">
+      <ng-container *ngIf="efiChartView === 1">
+        <h3 style="margin: 16px 0 12px 0; font-weight: 600; color: #0c4a6e; font-size: 14px; align-self: flex-start; width: 100%; text-align: center;">Eficiencia</h3>
+
+        <div class="charts-row">
+          <div class="chart-gauge-container">
+            <svg width="200" height="200" viewBox="0 0 200 200" class="gauge-chart blue-gauge">
+              <!-- Arco de fondo: 0% izquierda → 100% derecha por la parte inferior -->
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#e0e0e0" stroke-width="30" opacity="0.3" stroke-dasharray="251.3 251.3" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+              <!-- Arco azul (90% visualizado) -->
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#6ba3f5" stroke-width="30" stroke-dasharray="226.2 502.6" stroke-dashoffset="0" transform="rotate(180 100 100)" />
+              <!-- Texto: encima del arco -->
+              <text x="100" y="72" text-anchor="middle" font-size="14" font-weight="600" fill="#333">Eficiencia</text>
+              <text x="100" y="96" text-anchor="middle" font-size="18" font-weight="bold" fill="#397ecb">90</text>
+              <text x="100" y="113" text-anchor="middle" font-size="13" fill="#666">%</text>
+            </svg>
+          </div>
+
+          <div class="chart-pie-container" style="display: flex; flex-direction: column; align-items: center;">
+            <svg width="220" height="220" viewBox="0 0 220 220" class="pie-chart">
+              <!-- Fondo gris -->
+              <circle cx="110" cy="110" r="100" fill="#e8e8e8"/>
+              <!-- Calor Útil (azul) -->
+              <circle cx="110" cy="110" r="50" fill="none" stroke="#397ecb" stroke-width="100"
+                [attr.stroke-dasharray]="getEfiPieSegment('util')"
+                stroke-dashoffset="0" transform="rotate(-90 110 110)"/>
+              <!-- Pérdidas Chimenea (rojo suave) -->
+              <circle cx="110" cy="110" r="50" fill="none" stroke="#e85d4a" stroke-width="100"
+                [attr.stroke-dasharray]="getEfiPieSegment('chimenea')"
+                [attr.stroke-dashoffset]="getEfiPieOffset('chimenea')"
+                transform="rotate(-90 110 110)"/>
+              <!-- Pérdidas Rad.+Conv. (naranja) -->
+              <circle cx="110" cy="110" r="50" fill="none" stroke="#f4a742" stroke-width="100"
+                [attr.stroke-dasharray]="getEfiPieSegment('rc')"
+                [attr.stroke-dashoffset]="getEfiPieOffset('rc')"
+                transform="rotate(-90 110 110)"/>
+              <!-- Pérdidas Inquemados (gris oscuro) -->
+              <circle cx="110" cy="110" r="50" fill="none" stroke="#6b7280" stroke-width="100"
+                [attr.stroke-dasharray]="getEfiPieSegment('inq')"
+                [attr.stroke-dashoffset]="getEfiPieOffset('inq')"
+                transform="rotate(-90 110 110)"/>
+            </svg>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 12px; font-size: 11px; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; background: #397ecb; border-radius: 50%; flex-shrink: 0;"></span>
+                <span style="color: #333;">Calor Útil <strong>{{ evaluationResults.eficiencia.calorUtil.percent }}%</strong></span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; background: #e85d4a; border-radius: 50%; flex-shrink: 0;"></span>
+                <span style="color: #333;">Pérdidas Chimenea <strong>{{ evaluationResults.eficiencia.perdidasChimenea.percent }}%</strong></span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; background: #f4a742; border-radius: 50%; flex-shrink: 0;"></span>
+                <span style="color: #333;">Pérdidas Rad.+Conv. <strong>{{ evaluationResults.eficiencia.perdidasRC.percent === 777 ? 'N/A' : evaluationResults.eficiencia.perdidasRC.percent + '%' }}</strong></span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 10px; height: 10px; background: #6b7280; border-radius: 50%; flex-shrink: 0;"></span>
+                <span style="color: #333;">Pérdidas Inquemados <strong>{{ getSankeyInquemados() }}%</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="efiChartView === 2">
+        <h3 style="margin: 16px 0 12px 0; font-weight: 600; color: #0c4a6e; font-size: 14px; text-align: center; width: 100%;">Diagrama de Sankey</h3>
+
+        <div class="efi-sankey-wrapper">
+          <svg viewBox="0 0 320 420" class="efi-sankey-svg" aria-label="Diagrama de Sankey de eficiencia">
+            <!-- Barra 100% base -->
+            <rect x="120" y="370" width="80" height="26" rx="3" fill="#397ecb" stroke="#2c5fa3" stroke-width="2"/>
+            <text x="160" y="388" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">100%</text>
+
+            <!-- Flecha principal (caldero) -->
+            <path d="M120 370 L120 220 L80 220 L160 175 L240 220 L200 220 L200 370 Z" fill="#e8f0fe" stroke="#397ecb" stroke-width="2"/>
+
+            <!-- Flecha derecha superior: Pérdidas Chimenea -->
+            <path d="M200 245 L260 245 L260 230 L295 270 L260 310 L260 295 L200 295 Z" fill="#e8f0fe" stroke="#397ecb" stroke-width="2"/>
+
+            <!-- Flecha izquierda: Pérdidas Rad.+Conv. -->
+            <path d="M120 305 L90 305 L90 290 L58 290 L58 320 L90 320 L90 334 L120 334 Z" fill="#e8f0fe" stroke="#397ecb" stroke-width="2"/>
+
+            <!-- Flecha derecha inferior: Pérdidas Inquemados -->
+            <path d="M200 315 L230 315 L230 301 L252 301 L252 330 L230 330 L230 344 L200 344 Z" fill="#e8f0fe" stroke="#397ecb" stroke-width="2"/>
+
+            <!-- Calor Útil (Eficiencia) -->
+            <text x="160" y="112" text-anchor="middle" font-size="11" font-weight="600" fill="#0c4a6e">Calor Útil</text>
+            <text x="160" y="126" text-anchor="middle" font-size="10" font-weight="400" fill="#0c4a6e">(Eficiencia)</text>
+            <rect x="140" y="132" width="40" height="20" rx="3" fill="#397ecb" stroke="#2c5fa3" stroke-width="1.5"/>
+            <text x="160" y="146" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">{{ evaluationResults.eficiencia.calorUtil.percent }}%</text>
+
+            <!-- Pérdidas Chimenea -->
+            <text x="286" y="240" text-anchor="middle" font-size="10" font-weight="600" fill="#0c4a6e">Pérdidas</text>
+            <text x="286" y="252" text-anchor="middle" font-size="10" font-weight="600" fill="#0c4a6e">Chimenea</text>
+            <rect x="272" y="258" width="40" height="20" rx="3" fill="#397ecb" stroke="#2c5fa3" stroke-width="1.5"/>
+            <text x="292" y="272" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">{{ evaluationResults.eficiencia.perdidasChimenea.percent }}%</text>
+
+            <!-- Pérdidas Rad. + Conv. -->
+            <text x="48" y="272" text-anchor="middle" font-size="9" font-weight="600" fill="#0c4a6e">Pérdidas</text>
+            <text x="48" y="283" text-anchor="middle" font-size="9" font-weight="600" fill="#0c4a6e">Rad. + Conv.</text>
+            <rect x="30" y="288" width="38" height="18" rx="3" fill="#397ecb" stroke="#2c5fa3" stroke-width="1.5"/>
+            <text x="49" y="301" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">{{ evaluationResults.eficiencia.perdidasRC.percent === 777 ? 'N/A' : evaluationResults.eficiencia.perdidasRC.percent + '%' }}</text>
+
+            <!-- Pérdidas Inquemados -->
+            <rect x="240" y="328" width="38" height="18" rx="3" fill="#397ecb" stroke="#2c5fa3" stroke-width="1.5"/>
+            <text x="259" y="341" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">{{ getSankeyInquemados() }}%</text>
+            <text x="280" y="358" text-anchor="middle" font-size="9" font-weight="600" fill="#0c4a6e">Pérdidas</text>
+            <text x="280" y="369" text-anchor="middle" font-size="9" font-weight="600" fill="#0c4a6e">Inquemados</text>
+          </svg>
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <ng-container *ngIf="activeResultsTab === 'BMS'">
+      <h3 style="margin: 0 0 8px 0; font-weight: 700; color: #0c4a6e; font-size: 15px; text-align: center;">Balance de Masa</h3>
+
+      <div class="bilateral-chart">
+        <!-- Header -->
+        <div class="bilateral-header">
+          <span class="bilateral-header-label bilateral-header-in">Entradas</span>
+          <span class="bilateral-header-label bilateral-header-out">Salidas</span>
+        </div>
+
+        <!-- Entradas rows (bars go LEFT) -->
+        <ng-container *ngFor="let item of getBmsChartData()">
+          <div class="bilateral-row" *ngIf="item.section === 'in'">
+            <div class="bilateral-left">
+              <div class="bilateral-bar-track-left">
+                <div class="bilateral-bar-fill-left" [style.width.%]="item.width"></div>
+              </div>
+            </div>
+            <span class="bilateral-label">{{ item.label }}</span>
+            <div class="bilateral-right">
+              <span class="bilateral-value">{{ item.value | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Red arrow separator -->
+        <div class="bilateral-arrow-row">
+          <div class="bilateral-arrow-shape">▶</div>
+        </div>
+
+        <!-- Salidas rows (bars go RIGHT) -->
+        <ng-container *ngFor="let item of getBmsChartData()">
+          <div class="bilateral-row" *ngIf="item.section === 'out'">
+            <div class="bilateral-left">
+              <span class="bilateral-label-left">{{ item.label }}</span>
+            </div>
+            <div class="bilateral-right">
+              <div class="bilateral-bar-track-right">
+                <div class="bilateral-bar-fill-right" [style.width.%]="item.width"></div>
+              </div>
+              <span class="bilateral-value">{{ item.value | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="activeResultsTab === 'BEN'">
+      <h3 style="margin: 0 0 8px 0; font-weight: 700; color: #0c4a6e; font-size: 15px; text-align: center;">Balance de Energía</h3>
+
+      <div class="bilateral-chart">
+        <!-- Header -->
+        <div class="bilateral-header">
+          <span class="bilateral-header-label bilateral-header-in">Entradas</span>
+          <span class="bilateral-header-label bilateral-header-out">Salidas</span>
+        </div>
+
+        <!-- Entradas rows (bars go LEFT) -->
+        <ng-container *ngFor="let item of getBenChartData()">
+          <div class="bilateral-row" *ngIf="item.section === 'in'">
+            <div class="bilateral-left">
+              <div class="bilateral-bar-track-left">
+                <div class="bilateral-bar-fill-left" [style.width.%]="item.width"></div>
+              </div>
+            </div>
+            <span class="bilateral-label">{{ item.label }}</span>
+            <div class="bilateral-right">
+              <span class="bilateral-value">{{ item.value | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Red arrow separator -->
+        <div class="bilateral-arrow-row">
+          <div class="bilateral-arrow-shape">▶</div>
+        </div>
+
+        <!-- Salidas rows (bars go RIGHT) -->
+        <ng-container *ngFor="let item of getBenChartData()">
+          <div class="bilateral-row" *ngIf="item.section === 'out'">
+            <div class="bilateral-left">
+              <span class="bilateral-label-left">{{ item.label }}</span>
+            </div>
+            <div class="bilateral-right">
+              <div class="bilateral-bar-track-right">
+                <div class="bilateral-bar-fill-right" [style.width.%]="item.width"></div>
+              </div>
+              <span class="bilateral-value">{{ item.value | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="activeResultsTab === 'EMI'">
+      <ng-container *ngIf="emiChartView === 1">
+        <h3 style="margin: 0 0 4px 0; font-weight: 700; color: #397ecb; font-size: 16px; text-align: center;">Emisiones</h3>
+        <p style="margin: 0 0 2px 0; font-size: 12px; color: #334155; text-align: center; font-weight: 600;">{{ selectedCalderaName }}</p>
+        <p style="margin: 0 0 12px 0; font-size: 11px; color: #64748b; text-align: center;">t emisiones / t combustible</p>
+
+        <svg viewBox="0 0 280 340" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+          <!-- Chimenea -->
+          <rect x="120" y="100" width="40" height="200" rx="4" fill="#cbd5e1"/>
+          <rect x="126" y="106" width="28" height="188" rx="2" fill="#e2e8f0"/>
+
+          <!-- Flechas subiendo (humo) -->
+          <path d="M130 130 L140 100 L150 130" fill="none" stroke="#93c5fd" stroke-width="2" opacity="0.5"/>
+          <path d="M132 160 L140 130 L148 160" fill="none" stroke="#93c5fd" stroke-width="2" opacity="0.4"/>
+
+          <!-- Nube CO2 (izquierda) -->
+          <ellipse cx="65" cy="65" rx="50" ry="30" fill="#e0f2fe" stroke="#93c5fd" stroke-width="2"/>
+          <ellipse cx="45" cy="55" rx="20" ry="15" fill="#e0f2fe"/>
+          <ellipse cx="85" cy="55" rx="20" ry="15" fill="#e0f2fe"/>
+          <text x="65" y="62" text-anchor="middle" font-size="16" font-weight="700" fill="#0c4a6e">CO</text>
+          <text x="78" y="68" text-anchor="middle" font-size="10" font-weight="700" fill="#0c4a6e">2</text>
+          <!-- Flecha subiendo a nube CO2 -->
+          <line x1="120" y1="140" x2="90" y2="90" stroke="#60a5fa" stroke-width="3" marker-end="url(#emiArrow)"/>
+          <!-- Valor CO2 -->
+          <text x="65" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#0c4a6e">{{ getEmiCO2Comb() }}</text>
+
+          <!-- Nube SO2 (derecha) -->
+          <ellipse cx="220" cy="85" rx="38" ry="24" fill="#fce4ec" stroke="#f48fb1" stroke-width="1.5"/>
+          <ellipse cx="205" cy="78" rx="15" ry="12" fill="#fce4ec"/>
+          <ellipse cx="235" cy="78" rx="15" ry="12" fill="#fce4ec"/>
+          <text x="220" y="82" text-anchor="middle" font-size="14" font-weight="700" fill="#b71c1c">SO</text>
+          <text x="237" y="88" text-anchor="middle" font-size="9" font-weight="700" fill="#b71c1c">2</text>
+          <!-- Flecha subiendo a nube SO2 -->
+          <line x1="160" y1="160" x2="200" y2="105" stroke="#f48fb1" stroke-width="2.5" marker-end="url(#emiArrowPink)"/>
+          <!-- Valor SO2 -->
+          <text x="220" y="48" text-anchor="middle" font-size="11" font-weight="700" fill="#b71c1c">{{ getEmiSO2Comb() }}</text>
+
+          <!-- Fuego (base) -->
+          <path d="M120 310 Q105 280 115 260 Q125 240 140 260 Q155 240 165 260 Q175 280 160 310 Z" fill="#f97316"/>
+          <path d="M128 310 Q118 290 126 275 Q134 260 140 275 Q146 260 154 275 Q162 290 152 310 Z" fill="#fbbf24"/>
+          <path d="M135 310 Q130 298 136 288 Q140 280 144 288 Q150 298 145 310 Z" fill="#fef08a"/>
+
+          <!-- Arrow markers -->
+          <defs>
+            <marker id="emiArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#60a5fa"/></marker>
+            <marker id="emiArrowPink" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f48fb1"/></marker>
+          </defs>
+        </svg>
+      </ng-container>
+
+      <ng-container *ngIf="emiChartView === 2">
+        <h3 style="margin: 0 0 4px 0; font-weight: 700; color: #397ecb; font-size: 16px; text-align: center;">Emisiones</h3>
+        <p style="margin: 0 0 2px 0; font-size: 12px; color: #334155; text-align: center; font-weight: 600;">{{ selectedCalderaName }}</p>
+        <p style="margin: 0 0 12px 0; font-size: 11px; color: #64748b; text-align: center;">t emisiones / t vapor</p>
+
+        <svg viewBox="0 0 280 340" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 300px; margin: 0 auto; display: block;">
+          <!-- Chimenea -->
+          <rect x="120" y="100" width="40" height="200" rx="4" fill="#cbd5e1"/>
+          <rect x="126" y="106" width="28" height="188" rx="2" fill="#e2e8f0"/>
+
+          <!-- Flechas subiendo (humo) -->
+          <path d="M130 130 L140 100 L150 130" fill="none" stroke="#93c5fd" stroke-width="2" opacity="0.5"/>
+          <path d="M132 160 L140 130 L148 160" fill="none" stroke="#93c5fd" stroke-width="2" opacity="0.4"/>
+
+          <!-- Nube CO2 (izquierda) -->
+          <ellipse cx="65" cy="65" rx="50" ry="30" fill="#e0f2fe" stroke="#93c5fd" stroke-width="2"/>
+          <ellipse cx="45" cy="55" rx="20" ry="15" fill="#e0f2fe"/>
+          <ellipse cx="85" cy="55" rx="20" ry="15" fill="#e0f2fe"/>
+          <text x="65" y="62" text-anchor="middle" font-size="16" font-weight="700" fill="#0c4a6e">CO</text>
+          <text x="78" y="68" text-anchor="middle" font-size="10" font-weight="700" fill="#0c4a6e">2</text>
+          <!-- Flecha subiendo a nube CO2 -->
+          <line x1="120" y1="140" x2="90" y2="90" stroke="#60a5fa" stroke-width="3" marker-end="url(#emiArrow2)"/>
+          <!-- Valor CO2 -->
+          <text x="65" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#0c4a6e">{{ getEmiCO2Vapor() }}</text>
+
+          <!-- Nube SO2 (derecha) -->
+          <ellipse cx="220" cy="85" rx="38" ry="24" fill="#fce4ec" stroke="#f48fb1" stroke-width="1.5"/>
+          <ellipse cx="205" cy="78" rx="15" ry="12" fill="#fce4ec"/>
+          <ellipse cx="235" cy="78" rx="15" ry="12" fill="#fce4ec"/>
+          <text x="220" y="82" text-anchor="middle" font-size="14" font-weight="700" fill="#b71c1c">SO</text>
+          <text x="237" y="88" text-anchor="middle" font-size="9" font-weight="700" fill="#b71c1c">2</text>
+          <!-- Flecha subiendo a nube SO2 -->
+          <line x1="160" y1="160" x2="200" y2="105" stroke="#f48fb1" stroke-width="2.5" marker-end="url(#emiArrowPink2)"/>
+          <!-- Valor SO2 -->
+          <text x="220" y="48" text-anchor="middle" font-size="11" font-weight="700" fill="#b71c1c">{{ getEmiSO2Vapor() }}</text>
+
+          <!-- Caldera (base) — cilindro horizontal -->
+          <ellipse cx="140" cy="290" rx="55" ry="40" fill="#e0f2fe" stroke="#93c5fd" stroke-width="2"/>
+          <ellipse cx="140" cy="290" rx="40" ry="28" fill="#bae6fd" stroke="#7dd3fc" stroke-width="1"/>
+          <!-- Agua dentro -->
+          <path d="M105 300 Q115 308 125 300 Q135 292 145 300 Q155 308 165 300 Q175 292 175 300" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.7"/>
+          <!-- Válvula arriba -->
+          <rect x="133" y="245" width="14" height="10" rx="2" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+          <circle cx="140" cy="242" r="5" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+          <line x1="137" y1="242" x2="143" y2="242" stroke="#475569" stroke-width="1.5"/>
+
+          <!-- Arrow markers -->
+          <defs>
+            <marker id="emiArrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#60a5fa"/></marker>
+            <marker id="emiArrowPink2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f48fb1"/></marker>
+          </defs>
+        </svg>
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <div class="navigation-buttons">
+    <button class="nav-btn nav-btn-prev" (click)="handleChartsBack()"><span class="btn-arrow">◀</span></button>
+    <button *ngIf="(activeResultsTab === 'EFI' && efiChartView === 1) || (activeResultsTab === 'EMI' && emiChartView === 1)" class="nav-btn nav-btn-next" (click)="goToNextChartView()"><span class="btn-arrow">▶</span></button>
+  </div>
+</div>
+
+<!-- detailed results section -->
+<div class="form-root" *ngIf="evaluationMode && !showCharts && evaluationResults">
+  <div class="results-header">
+    <h2>{{ activeResultsTab === 'COM' ? 'Combustión' : activeResultsTab === 'PRO' ? 'Producción' : activeResultsTab === 'EFI' ? 'Eficiencia' : activeResultsTab === 'BMS' ? 'B. Materia' : activeResultsTab === 'BEN' ? 'B. Energía' : 'Emisiones' }}</h2>
+    <div class="results-header-buttons">
+      <button class="results-header-btn" [class.active]="isResultsUnitSystem('USB')" (click)="setResultsUnitSystem('USB')">USB</button>
+      <button class="results-header-btn" [class.active]="isResultsUnitSystem('LKS')" (click)="setResultsUnitSystem('LKS')">LKS</button>
+      <button class="results-header-btn" [class.active]="isResultsUnitSystem('SI')" (click)="setResultsUnitSystem('SI')">SI</button>
+    </div>
+  </div>
+
+  <div class="results-tabs">
+    <button class="results-tab" [class.active]="activeResultsTab === 'COM'"
+      (click)="setActiveResultsTab('COM')">Combustión</button>
+    <button class="results-tab" [class.active]="activeResultsTab === 'PRO'"
+      (click)="setActiveResultsTab('PRO')">Producción</button>
+    <button class="results-tab" [class.active]="activeResultsTab === 'EFI'"
+      (click)="setActiveResultsTab('EFI')">Eficiencia</button>
+    <button class="results-tab" [class.active]="activeResultsTab === 'BMS'" (click)="setActiveResultsTab('BMS')">B.
+      Materia</button>
+    <button class="results-tab" [class.active]="activeResultsTab === 'BEN'" (click)="setActiveResultsTab('BEN')">B.
+      Energía</button>
+    <button class="results-tab" [class.active]="activeResultsTab === 'EMI'"
+      (click)="setActiveResultsTab('EMI')">Emisiones</button>
+  </div>
+  <div class="selected-caldera">{{ selectedCalderaName }}</div>
+  <!-- Vista COM - Combustión -->
+  <div *ngIf="activeResultsTab === 'COM'" class="results-data-table">
+    <div class="data-row">
+      <span class="row-label">Calidad</span>
+      <span class="data-input">{{evaluationResults.com.R1A}}</span>
+      <span class="data-unit"></span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Exceso de aire (EA)</span>
+      <span class="data-input">{{evaluationResults.com.R1B}}</span>
+      <span class="data-unit">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Aire·Combustible</span>
+      <span class="data-input">{{evaluationResults.com.R1C}}</span>
+      <span class="data-unit">λ</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Grado de Conversión</span>
+      <span class="data-input">{{evaluationResults.com.R2A}}</span>
+      <span class="data-unit">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Inquemados sólidos</span>
+      <span class="data-input">{{evaluationResults.com.R2B}}</span>
+      <span class="data-unit">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Inquemados gaseosos</span>
+      <span class="data-input">{{evaluationResults.com.R2C}}</span>
+      <span class="data-unit">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Temperatura de llama</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.com.R3, 'temp_c')}}</span>
+      <span class="data-unit">{{getResultsUnit('temp_c', '°C')}}</span>
+    </div>
+  </div>
+
+  <!-- Vista PRO - Producción -->
+  <div *ngIf="activeResultsTab === 'PRO'" class="results-data-table">
+    <div class="data-row">
+      <span class="row-label">Producción de Vapor</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.carga.produccionVapor, 'mass_flow')}}</span>
+      <span class="data-unit">{{getResultsUnit('mass_flow', 'kg/h')}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Factor de Carga</span>
+      <span class="data-input">{{evaluationResults.carga.factorCarga}}</span>
+      <span class="data-unit">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Factor de Evaporación</span>
+      <span class="data-input">{{evaluationResults.carga.factorEvaporacion}}</span>
+      <span class="data-unit"></span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Energía/Vapor</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ratios.consumoEnergiaVapor, 'energy_specific')}}</span>
+      <span class="data-unit">{{getResultsUnit('energy_specific', 'kcal/kg')}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Vapor/Superficie</span>
+      <span class="data-input">{{evaluationResults.ratios.produccionVaporSuperficie}}</span>
+      <span class="data-unit">kg/m²</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Costos del Vapor</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ratios.costoVapor, 'cost_mass')}}</span>
+      <span class="data-unit">{{getResultsUnit('cost_mass', 'US$/t')}}</span>
+    </div>
+  </div>
+
+  <!-- Vista EFI - Eficiencia -->
+  <div *ngIf="activeResultsTab === 'EFI'" class="results-data-table">
+    <div class="efficiency-header">
+      <span class="header-label"> </span>
+      <span class="header-code">{{getResultsUnit('energy_flow', 'kcal/h')}}</span>
+      <span class="header-percent">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Eficiencia</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.calorUtil.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.calorUtil.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">P Chimenea</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasChimenea.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.perdidasChimenea.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">P Inquemados Sol.</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasInquemados.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.perdidasInquemados.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">P Inquemados Gas.</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasInquemadosGas.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.perdidasInquemadosGas.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">P Rad. + Conv.</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasRC.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.perdidasRC.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">P Purgas</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasPurgas.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.perdidasPurgas.percent}}</span>
+    </div>
+    <div class="data-row total-row">
+      <span class="row-label">Total</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.total.btu, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.eficiencia.total.percent}}</span>
+    </div>
+  </div>
+
+  <!-- Vista BMS - Balance de Materia -->
+  <div *ngIf="activeResultsTab === 'BMS'" class="results-data-table">
+    <div class="efficiency-header">
+      <span class="header-label"> Entradas</span>
+      <span class="header-code">{{getResultsUnit('mass_flow', 'kg/h')}}</span>
+      <span class="header-percent">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Combustible</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.combustible.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.entradas.combustible.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Agua (alimentación)</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.aguaAlimentacion.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.entradas.aguaAlimentacion.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Aire (combustión)</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.aireCombustion.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.entradas.aireCombustion.percent}}</span>
+    </div>
+    <div class="data-row total-row">
+      <span class="row-label">Total</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.total.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.entradas.total.percent}}</span>
+    </div>
+    <h3 class="section-divider">Salidas</h3>
+    <div class="data-row">
+      <span class="row-label">Vapor (Production)</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.produccionVapor.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.produccionVapor.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Purgas de agua</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.purgasAgua.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.purgasAgua.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Bióxido de carbono</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.co2.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.co2.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Monóxido de carbono</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.co.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.co.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Oxígeno</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.o2.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.o2.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Nitrógeno</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.n2.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.n2.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Agua</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.h2o.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.h2o.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Bióxido de azufre</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.so2.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.so2.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Holín</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.hollin.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.hollin.percent}}</span>
+    </div>
+    <div class="data-row total-row">
+      <span class="row-label">Total</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.total.val, 'mass_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.bms.salidas.total.percent}}</span>
+    </div>
+  </div>
+
+  <!-- Vista BEN - Balance de Energía -->
+  <div *ngIf="activeResultsTab === 'BEN'" class="results-data-table">
+    <div class="efficiency-header">
+      <span class="header-label"> Entradas</span>
+      <span class="header-code">{{getResultsUnit('energy_flow', 'kcal/h')}}</span>
+      <span class="header-percent">%</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Calor de combustión</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R29.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.entradas.R29.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Calor sensible combustible</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R30.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.entradas.R30.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Calor sensible aire seco</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R31.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.entradas.R31.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Calor humedad del aire</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R32.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.entradas.R32.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Calor agua de alimentación</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R33.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.entradas.R33.percent}}</span>
+    </div>
+    <div class="data-row total-row">
+      <span class="row-label">Total</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R34.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.entradas.R34.percent}}</span>
+    </div>
+    <h3 class="section-divider">Salidas</h3>
+    <div class="data-row">
+      <span class="row-label">Calor vapor generado</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R35.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R35.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Pérd. calor sensible chimenea</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R36.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R36.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Pérd. inquemados sólidos</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R37.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R37.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Pérd. inquemados gaseosos</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R38.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R38.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Pérd. Radiación + Convección</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R39.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R39.percent}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Calor purgas</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R40.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R40.percent}}</span>
+    </div>
+    <div class="data-row total-row">
+      <span class="row-label">Total</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R41.val, 'energy_flow')}}</span>
+      <span class="data-unit">{{evaluationResults.ben.salidas.R41.percent}}</span>
+    </div>
+  </div>
+
+  <!-- Vista EMI - Emisiones -->
+  <div *ngIf="activeResultsTab === 'EMI'" class="results-data-table">
+    <div class="efficiency-header">
+      <span class="header-label">Emisiones</span>
+      <span class="header-code">{{getResultsUnit('emission_factor', 'kg/Gcal')}}</span>
+      <span class="header-percent">{{getResultsUnit('annual_mass', 't/año')}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">CO₂</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.emi.R42, 'emission_factor')}}</span>
+      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R46, 'annual_mass')}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">CO</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.emi.R43, 'emission_factor')}}</span>
+      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R47, 'annual_mass')}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Holín</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.emi.R44, 'emission_factor')}}</span>
+      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R48, 'annual_mass')}}</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">SO₂</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.emi.R45, 'emission_factor')}}</span>
+      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R49, 'annual_mass')}}</span>
+    </div>
+    <h3 style="margin: 16px 0 8px 0; font-weight: 600; color: #333; font-size: 13px;">Rocío ácido</h3>
+    <div class="data-row">
+      <span class="row-label">Temperatura</span>
+      <span class="data-input">{{displayResultValue(evaluationResults.emi.R50, 'temp_c')}}</span>
+      <span class="data-unit">{{getResultsUnit('temp_c', '°C')}}</span>
+    </div>
+  </div>
+
+  <!-- Botón de Gráficas y Navegación (Sticky Footer) -->
+  <div class="results-footer">
+    <div class="results-footer-top">
+      <button class="charts-btn-fixed" (click)="toggleCharts()" title="Ver gráficas">📊</button>
+    </div>
+
+    <div class="error-message" *ngIf="saveError">
+      <span>{{ saveError }}</span>
+    </div>
+
+    <div class="results-footer-bottom results-actions-row">
+      <button class="nav-btn nav-btn-prev results-back-btn" (click)="handleResultsBack()">
+        <span class="btn-arrow">◀</span>
+      </button>
+      <button class="nav-btn nav-btn-center results-save-btn" (click)="saveEvaluation()" [disabled]="savingEvaluation">
+        <span class="results-save-label" *ngIf="!savingEvaluation">Guardar Reporte</span>
+        <span class="results-save-label" *ngIf="savingEvaluation">Guardando...</span>
+      </button>
+      <button class="nav-btn nav-btn-next results-next-btn" (click)="goToNextResultTab()">
+        <span class="btn-arrow">▶</span>
+      </button>
+    </div>
+  </div>
+</div>

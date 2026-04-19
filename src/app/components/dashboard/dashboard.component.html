@@ -1,0 +1,163 @@
+<div class="dashboard-mobile">
+  <!-- Header -->
+  <div class="mobile-header">
+    <div class="header-top">
+      <div class="logo-container">
+        <img src="assets/logo smartboiler.jpg" alt="SmartBoiler Logo" class="smartboiler-logo"/>
+        <h1 class="mobile-logo"><span class="green-text">Smart</span><span class="blue-text">Boiler</span></h1>
+      </div>
+      <button class="logout-btn" (click)="toggleMenu()">☰</button>
+    </div>
+    <div class="company-info">
+      <div class="company-circle">
+        <img *ngIf="companyImageUrl" [src]="companyImageUrl" alt="Logo de empresa" class="company-logo-img" />
+        <span *ngIf="!companyImageUrl">I</span>
+      </div>
+      <div class="company-details">
+        <p class="company-name">Empresa</p>
+        <p class="company-subtitle">{{ companyName || 'Sin empresa registrada' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hamburger Menu -->
+  <div class="menu-overlay" [class.active]="menuOpen" (click)="toggleMenu()"></div>
+  <div class="hamburger-menu" [class.active]="menuOpen">
+    <div class="menu-content">
+      <div class="menu-header">
+        <h2>Menú</h2>
+        <button class="close-btn" (click)="toggleMenu()">✕</button>
+      </div>
+      <div class="menu-user-info">
+        <div class="user-avatar">{{ getUserInitial() }}</div>
+        <div class="user-details">
+          <p class="user-email">{{ userEmail }}</p>
+          <p class="company-name-menu">{{ companyName || 'Sin empresa registrada' }}</p>
+        </div>
+      </div>
+      <button class="menu-logout-btn" (click)="logout()">Cerrar Sesión</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="mobile-content">
+    <!-- Fichas Label -->
+    <p class="fichas-label">Fichas</p>
+    
+    <!-- Fichas Cards Section -->
+    <div class="fichas-section">
+      <div class="ficha-btn" (click)="viewFicha('empresa')">
+        <svg class="ficha-icon" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="3" y="3" width="4" height="4"/>
+          <rect x="9" y="3" width="4" height="4"/>
+          <rect x="15" y="3" width="4" height="4"/>
+          <rect x="3" y="9" width="4" height="4"/>
+          <rect x="9" y="9" width="4" height="4"/>
+          <rect x="15" y="9" width="4" height="4"/>
+          <rect x="3" y="15" width="4" height="4"/>
+          <rect x="9" y="15" width="4" height="4"/>
+          <rect x="15" y="15" width="4" height="4"/>
+        </svg>
+        <span>Empresa</span>
+      </div>
+      <div class="ficha-btn" (click)="viewFicha('plantas')">
+        <svg class="ficha-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M5 10h4v8H5V10zm6-6h4v14h-4V4zm6 2h4v12h-4V6z"/>
+        </svg>
+        <span>Plantas</span>
+      </div>
+      <div class="ficha-btn" (click)="viewFicha('calderas')">
+        <svg class="ficha-icon" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="8"/>
+          <circle cx="12" cy="12" r="5" fill="white" opacity="0.5"/>
+        </svg>
+        <span>Calderos</span>
+      </div>
+    </div>
+
+    <!-- Evaluation Section with Chart -->
+    <p class="evaluation-label">Evaluación</p>
+    <div class="evaluation-section">
+      <div class="evaluation-content">
+        <!-- Chart Column -->
+        <div class="chart-column">
+          <div class="chart-indicators">
+            <div class="indicator-item">
+              <span class="indicator-dot" style="background: #d4a574;"></span>
+              <span class="indicator-text">ℹ️</span>
+            </div>
+            <div class="indicator-item">
+              <span class="indicator-dot" style="background: #f4a460;"></span>
+              <span class="indicator-text">S</span>
+            </div>
+            <div class="indicator-item">
+              <span class="indicator-dot" style="background: #daa520;"></span>
+              <span class="indicator-text">S</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div id="evaluationChart"></div>
+          </div>
+          <p class="chart-label">Reciente</p>
+        </div>
+
+        <!-- Connector Lines -->
+        <div class="connector-lines">
+          <div class="vertical-line"></div>
+          <div class="horizontal-line"></div>
+        </div>
+
+        <!-- Items Column -->
+        <div class="items-column">
+          <div class="item-box" (click)="createNewEvaluation()">
+            <svg class="item-icon" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span class="item-label">Nueva</span>
+          </div>
+          <div class="item-box" (click)="searchEvaluations()">
+            <svg class="item-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span class="item-label">Archivo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Archivo de Evaluaciones -->
+    <div class="archive-overlay" [class.active]="showArchive" (click)="closeArchive()"></div>
+    <div class="archive-panel" [class.active]="showArchive">
+      <div class="archive-header">
+        <h2 class="archive-title">Archivo de Evaluaciones</h2>
+        <button class="archive-close-btn" (click)="closeArchive()">✕</button>
+      </div>
+      <div class="archive-list" *ngIf="evaluations.length > 0; else noEvals">
+        <div class="archive-item" *ngFor="let ev of evaluations">
+          <div class="archive-item-left">
+            <span class="archive-fuel">{{ ev.fuelType }}</span>
+            <span class="archive-date">{{ getEvaluationDate(ev) }} · {{ getEvaluationHour(ev) }}</span>
+          </div>
+          <div class="archive-item-right">
+            <span class="archive-efi">Efi: {{ getEficiencia(ev) }}</span>
+            <span class="archive-r1a">{{ getR1A(ev) }}</span>
+          </div>
+          <button class="archive-delete-btn" (click)="deleteEvaluation(ev, $event)" title="Eliminar">✕</button>
+        </div>
+      </div>
+      <ng-template #noEvals>
+        <p class="archive-empty">No hay evaluaciones guardadas.</p>
+      </ng-template>
+    </div>
+
+    <!-- Trend Section -->
+    <div class="trend-section">
+      <h2>Tendencia</h2>
+      <div class="trend-container">
+        <div id="trendChart"></div>
+      </div>
+    </div>
+  </div>
+</div>

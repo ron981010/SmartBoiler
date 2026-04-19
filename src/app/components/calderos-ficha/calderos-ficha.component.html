@@ -1,0 +1,353 @@
+<div class="calderos-ficha-container">
+  <!-- Header -->
+  <div class="ficha-header" *ngIf="!isLoadingData && !selectedCaldero && !isEditing && !isCreating && !isViewing">
+    <h1>Ficha de caldero</h1>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoadingData">
+    <p>Cargando información...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-message" *ngIf="error">
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Main View - Plant Selector and Calderos Grid -->
+  <div class="main-view" *ngIf="!isLoadingData && !selectedCaldero && !isEditing && !isCreating">
+    <!-- Plant Selector -->
+    <div class="plant-selector-section">
+      <label class="section-label">Planta</label>
+      <select class="plant-selector" (change)="onPlantSelected($event)" [value]="selectedPlant?.id || ''">
+        <option value="">Selecciona una planta</option>
+        <option *ngFor="let plant of plants" [value]="plant.id">{{ plant.nombre }}</option>
+      </select>
+    </div>
+
+    <!-- Calderos Grid (only show if plant is selected) -->
+    <div class="calderos-grid-section" *ngIf="selectedPlant">
+      <div class="calderos-grid">
+        <!-- Existing Calderos -->
+        <div class="caldero-card" *ngFor="let caldero of calderos" (click)="viewCaldero(caldero)">
+          <div class="caldero-icon">
+            <img src="assets/caldero icon.jpg" alt="Caldero Icon" class="icon-image"/>
+          </div>
+          <p class="caldero-name">{{ caldero.nombre }}</p>
+        </div>
+
+        <!-- Add Caldero Button -->
+        <div class="caldero-card add-card" (click)="createNewCaldero()">
+          <div class="caldero-icon add-icon">
+            <svg viewBox="0 0 24 24" fill="white">
+              <line x1="12" y1="5" x2="12" y2="19" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="5" y1="12" x2="19" y2="12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="caldero-card-label">Agregar</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav-actions">
+      <button class="bottom-back-btn" (click)="goBack()">← Atrás</button>
+    </div>
+  </div>
+
+
+
+  <!-- ===== PASO 1: Información Principal (Crear, Editar o Ver) ===== -->
+  <form [formGroup]="form" class="caldero-form" *ngIf="!isLoadingData && (isCreating || isEditing || isViewing) && formStep === 1">
+    <div class="form-header form-header-step1">
+      <div class="header-titles">
+        <h2>Ficha de caldero</h2>
+        <p class="plant-header-name" *ngIf="selectedPlant?.nombre">{{ selectedPlant?.nombre }}</p>
+      </div>
+      <button 
+        type="button" 
+        class="edit-icon-btn" 
+        *ngIf="!isEditing && isViewing"
+        (click)="editCaldero()"
+        title="Editar caldero"
+      >
+        <img src="assets/edit button.jpg" alt="Editar" class="edit-icon"/>
+      </button>
+      <button
+        type="button"
+        class="header-cancel-btn"
+        *ngIf="isEditing && !!selectedCaldero"
+        (click)="cancelEdit()"
+      >
+        Cancelar
+      </button>
+    </div>
+    <div class="form-with-diagram">
+      <!-- Left side: Form fields -->
+      <div class="form-content">
+        <!-- Nombre -->
+        <div class="form-section">
+          <label>Nombre <span class="required">*</span></label>
+          <input type="text" formControlName="nombre" placeholder="Ej: Caldero APIN" />
+        </div>
+
+        <!-- Marca -->
+        <div class="form-section">
+          <label>Marca <span class="required">*</span></label>
+          <input type="text" formControlName="marca" placeholder="Ej: APIN" />
+        </div>
+
+        <!-- Configuración -->
+        <div class="form-section">
+          <label>Configuración <span class="required">*</span></label>
+          <select formControlName="configuracion" (change)="onConfiguracionChanged($event)" [disabled]="isEditing">
+            <option value="">Selecciona configuración</option>
+            <option *ngFor="let tipo of tipoCalderoOptions" [value]="tipo.config">{{ tipo.label }}</option>
+          </select>
+        </div>
+
+        <!-- Combustible -->
+        <div class="form-section">
+          <label>Combustible <span class="required">*</span></label>
+          <select formControlName="combustible">
+            <option value="">Selecciona combustible</option>
+            <option *ngFor="let comb of combustibleOptions" [value]="comb.value">{{ comb.label }}</option>
+          </select>
+        </div>
+
+        <!-- Capacidad Instalada -->
+        <div class="form-section-full">
+          <label>Capacidad Instalada <span class="required">*</span></label>
+          <div class="input-with-unit">
+            <input type="number" formControlName="capacidad_instalada" placeholder="12500" />
+            <select formControlName="capacidad_unidad" class="unit-select-wide">
+              <option value="lb/h">lb/h</option>
+              <option value="kg/h">kg/h</option>
+              <option value="t/h">t/h</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Presión de Diseño -->
+        <div class="form-section-full">
+          <label>Presión de Diseño <span class="required">*</span></label>
+          <div class="input-with-unit">
+            <input type="number" formControlName="presion_diseno" placeholder="12500" />
+            <select formControlName="presion_unidad">
+              <option value="Psi g">Psi g</option>
+              <option value="atm g">atm g</option>
+              <option value="bar g">bar g</option>
+              <option value="MPa g">MPa g</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Imagen -->
+        <div class="form-section">
+          <label>Imagen</label>
+          <div class="image-upload-container">
+            <div class="image-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" alt="Caldero image preview" />
+              <button 
+                type="button" 
+                class="clear-image-btn" 
+                (click)="deleteImage()"
+                [disabled]="loading"
+                *ngIf="isCreating || isEditing"
+              >
+                ✕ Eliminar imagen
+              </button>
+            </div>
+
+            <div class="image-placeholder" *ngIf="!imagePreview && (isCreating || isEditing)">
+              <label class="image-upload-label">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+                <span>Selecciona una imagen</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  (change)="onImageSelected($event)"
+                  class="image-input"
+                />
+              </label>
+            </div>
+
+            <div class="image-placeholder" *ngIf="!imagePreview && isViewing && !isEditing">
+              <span>Sin imagen</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons - Paso 1 -->
+        <div class="form-actions">
+          <button type="button" class="back-btn-action" (click)="isViewing && !isEditing ? backToList() : cancelEdit()">
+            ← Atrás
+          </button>
+          <button
+            type="button"
+            class="save-btn"
+            (click)="onSave()"
+            [disabled]="loading || form.invalid"
+            [class.loading]="loading"
+            *ngIf="isEditing && !!selectedCaldero"
+          >
+            <span *ngIf="!loading">💾 Guardar</span>
+            <span *ngIf="loading">Guardando...</span>
+          </button>
+          <button 
+            type="button" 
+            class="next-btn-action" 
+            (click)="nextStep()"
+          >
+            Siguiente →
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- ===== PASO 2: Dimensiones y Datos Adicionales ===== -->
+  <form [formGroup]="form" class="caldero-form" *ngIf="!isLoadingData && (isCreating || isEditing || isViewing) && formStep === 2">
+    <div class="form-header form-header-step2">
+      <div class="header-titles">
+        <h2>Ficha de Caldero</h2>
+        <p class="tipo-caldero-subtitle" *ngIf="getCurrentTipoCaldero() === 'cilindrico_horizontal'">Cilíndrico Horizontal</p>
+        <p class="tipo-caldero-subtitle" *ngIf="getCurrentTipoCaldero() === 'cilindrico_vertical'">Cilíndrico Vertical</p>
+        <p class="tipo-caldero-subtitle" *ngIf="getCurrentTipoCaldero() === 'apin'">Caldero Tipo caja (box)</p>
+      </div>
+      <button 
+        type="button" 
+        class="edit-icon-btn-step2" 
+        *ngIf="!isEditing && isViewing"
+        (click)="editCaldero()"
+        title="Editar caldero"
+      >
+        <img src="assets/edit button.jpg" alt="Editar" class="edit-icon"/>
+      </button>
+      <button
+        type="button"
+        class="header-cancel-btn header-cancel-btn-step2"
+        *ngIf="isEditing && !!selectedCaldero"
+        (click)="cancelEdit()"
+      >
+        Cancelar
+      </button>
+    </div>
+
+    <div class="form-content-step2">
+      <!-- Superficie y Año (primera fila) -->
+      <div class="form-row-half">
+        <div class="form-section">
+          <label>Superficie (ft2)</label>
+          <input type="number" formControlName="superficie" placeholder="Ej: 12500" />
+        </div>
+        <div class="form-section">
+          <label>Año</label>
+          <select formControlName="anio">
+            <option value="">Selecciona año</option>
+            <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tratamiento Externo -->
+      <div class="form-section">
+        <label>Tratamiento Externo de Agua</label>
+        <select formControlName="tratamiento_externo">
+          <option value="">Selecciona tratamiento</option>
+          <option *ngFor="let trat of tratamientoExternoOptions" [value]="trat">{{ trat }}</option>
+        </select>
+      </div>
+
+      <!-- Tratamiento Interno -->
+      <div class="form-section">
+        <label>Tratamiento Interno de Agua</label>
+        <select formControlName="tratamiento_interno">
+          <option value="">Selecciona tratamiento</option>
+          <option *ngFor="let trat of tratamientoInternoOptions" [value]="trat">{{ trat }}</option>
+        </select>
+      </div>
+      <!-- Dimensiones - Cilíndrico Horizontal -->
+      <ng-container *ngIf="getCurrentTipoCaldero() === 'cilindrico_horizontal'">
+        <h3>Dimensiones - Cilíndrico Horizontal</h3>
+        <div class="form-row-half">
+          <div class="form-section">
+            <label>Diámetro - D (m) <span class="required">*</span></label>
+            <input type="number" formControlName="diametro_d" placeholder="1.5" step="0.01" />
+          </div>
+          <div class="form-section">
+            <label>Longitud - L (m) <span class="required">*</span></label>
+            <input type="number" formControlName="longitud_l" placeholder="2.0" step="0.01" />
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Dimensiones - Cilíndrico Vertical -->
+      <ng-container *ngIf="getCurrentTipoCaldero() === 'cilindrico_vertical'">
+        <h3>Dimensiones - Cilíndrico Vertical</h3>
+        <div class="form-row-half">
+          <div class="form-section">
+            <label>Diámetro - D (m) <span class="required">*</span></label>
+            <input type="number" formControlName="diametro_d" placeholder="1.5" step="0.01" />
+          </div>
+          <div class="form-section">
+            <label>Altura - H (m) <span class="required">*</span></label>
+            <input type="number" formControlName="altura_h" placeholder="2.5" step="0.01" />
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Dimensiones - APIN -->
+      <ng-container *ngIf="getCurrentTipoCaldero() === 'apin'">
+        <h3>Dimensiones - Tipo caja (box)</h3>
+        <div class="form-row-half">
+          <div class="form-section">
+            <label>Ancho - A (m) <span class="required">*</span></label>
+            <input type="number" formControlName="ancho_a" placeholder="1.0" step="0.01" />
+          </div>
+          <div class="form-section">
+            <label>Longitud - L (m) <span class="required">*</span></label>
+            <input type="number" formControlName="longitud_l" placeholder="1.8" step="0.01" />
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Diagrama de Dimensiones -->
+      <div class="diagram-section" *ngIf="getCurrentTipoCaldero()">
+        <div *ngIf="getCurrentTipoCaldero() === 'cilindrico_horizontal'" class="diagram">
+          <div class="diagram-label">Cilíndrico Horizontal</div>
+          <img src="assets/cilindrico horizontal.jpg" alt="Cilíndrico Horizontal" class="diagram-image"/>
+        </div>
+
+        <div *ngIf="getCurrentTipoCaldero() === 'cilindrico_vertical'" class="diagram">
+          <div class="diagram-label">Cilíndrico Vertical</div>
+          <img src="assets/cilindrico vertical.jpg" alt="Cilíndrico Vertical" class="diagram-image"/>
+        </div>
+
+        <div *ngIf="getCurrentTipoCaldero() === 'apin'" class="diagram">
+          <div class="diagram-label">Tipo caja (box)</div>
+          <img src="assets/tipo box.jpg" alt="Tipo Caja Box" class="diagram-image"/>
+        </div>
+      </div>
+
+      <!-- Action Buttons - Paso 2 -->
+      <div class="form-actions">
+        <button type="button" class="back-btn-action" (click)="previousStep()">
+          ← Atrás
+        </button>
+        <button 
+          type="button" 
+          class="save-btn" 
+          (click)="onSave()" 
+          [disabled]="loading || form.invalid"
+          [class.loading]="loading"
+          *ngIf="isCreating || isEditing"
+        >
+          <span *ngIf="!loading">💾 Guardar</span>
+          <span *ngIf="loading">Guardando...</span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

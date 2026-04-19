@@ -1,0 +1,416 @@
+.company-ficha-container {
+  background: #f8f9fa;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 20px 130px;
+}
+
+.ficha-header {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e0e0e0;
+  position: relative;
+}
+
+.ficha-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  text-align: center;
+}
+
+.edit-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.edit-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.header-cancel-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.header-cancel-btn:hover {
+  background: #e63939;
+}
+
+.loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: #999;
+}
+
+.error-message {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  padding: 12px 16px;
+  margin: 16px 20px;
+  border-radius: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.company-form {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  padding-bottom: 120px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-section {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-section label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.label-subtitle {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+  font-weight: 400;
+}
+
+.form-section input,
+.form-section select,
+.address-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.form-section input:focus,
+.form-section select:focus,
+.address-textarea:focus {
+  outline: none;
+  border-color: #5b9cff;
+  box-shadow: 0 0 0 3px rgba(91, 156, 255, 0.1);
+}
+
+.form-section input:disabled,
+.form-section select:disabled,
+.address-textarea:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.ciiu-select {
+  width: 100%;
+}
+
+.ciiu-help {
+  font-size: 12px;
+  color: #5b9cff;
+  margin-top: 4px;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns: 25% 1fr;
+  gap: 10px;
+}
+
+.avenue-select {
+  min-width: 0;
+}
+
+.avenue-number {
+  min-width: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.form-row .form-section {
+  margin-bottom: 0;
+}
+
+/* Image Upload Styles */
+.image-upload-container {
+  position: relative;
+}
+
+.image-placeholder {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 24px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.image-placeholder:hover {
+  border-color: #5b9cff;
+  background: #f0f9ff;
+}
+
+.image-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.image-upload-label svg {
+  width: 30px;
+  height: 30px;
+  color: #9ca3af;
+}
+
+.image-input {
+  display: none;
+}
+
+.image-preview {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
+.clear-image-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-weight: 600;
+}
+
+.clear-image-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid #e5e7eb;
+  background: #fff;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, calc(100% - 24px));
+  bottom: 0;
+  z-index: 20;
+}
+
+.form-actions:empty {
+  display: none;
+}
+
+.back-btn-action,
+.cancel-btn,
+.save-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.back-btn-action,
+.cancel-btn {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.back-btn-action:hover,
+.cancel-btn:hover {
+  background: #d0d0d0;
+}
+
+.back-btn-action:active,
+.cancel-btn:active {
+  transform: scale(0.98);
+}
+
+.save-btn {
+  background: #5b9cff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #4a8ae6;
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.save-btn.loading {
+  opacity: 0.7;
+}
+
+/* ============ MOBILE FIRST RESPONSIVENESS ============ */
+
+@media (max-width: 480px) {
+  .company-ficha-container {
+    padding: 15px 15px 130px;
+  }
+
+  .company-form {
+    padding: 16px 12px;
+    padding-bottom: 120px;
+  }
+
+  .form-section {
+    margin-bottom: 18px;
+  }
+
+  .form-section label {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .form-section input,
+  .form-section select,
+  .address-textarea {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+
+  .address-row {
+    grid-template-columns: 25% 1fr;
+    gap: 8px;
+  }
+
+  .avenue-select {
+    min-width: 0;
+  }
+
+  .ficha-header {
+    margin-bottom: 15px;
+    padding-bottom: 30px;
+  }
+
+  .ficha-header h1 {
+    font-size: 20px;
+  }
+
+  .edit-btn,
+  .header-cancel-btn {
+    right: 12px;
+  }
+
+  .form-actions {
+    margin-top: 30px;
+    gap: 8px;
+  }
+
+  .cancel-btn,
+  .back-btn-action,
+  .save-btn {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  .image-placeholder {
+    padding: 30px 15px;
+  }
+
+  .image-upload-label svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .error-message {
+    margin: 12px 16px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}

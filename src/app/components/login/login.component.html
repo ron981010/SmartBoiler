@@ -1,0 +1,83 @@
+<div class="login-container">
+  <div class="login-card">
+    <!-- Header -->
+    <div class="logo-section">
+      <div class="logo">
+        <img src="assets/logo smartboiler.jpg" alt="Logo SmartBoiler" class="logo-image" />
+      </div>
+      <h1 class="title">Smart<span class="bold">Boiler</span></h1>
+    </div>
+
+    <div class="subtitle">Inicio de Sesión - Bienvenido!</div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="error">
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="ejemplo@email.com"
+          [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+        />
+        <small class="error-text" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          Email inválido
+        </small>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label class="form-label">Clave</label>
+        <input
+          type="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="••••••••"
+          [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+        />
+        <small class="error-text" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          Mínimo 6 caracteres
+        </small>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-primary" [disabled]="loading || loginForm.invalid">
+        <span *ngIf="!loading">Acceso</span>
+        <span *ngIf="loading">Cargando...</span>
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="divider">
+      <span>O accede con</span>
+    </div>
+
+    <!-- Social Login Buttons -->
+    <div class="social-buttons">
+      <button class="social-btn twitter" (click)="socialLogin('twitter')" title="Twitter">
+        <span>𝕏</span> Twitter
+      </button>
+      <button class="social-btn facebook" (click)="socialLogin('facebook')" title="Facebook">
+        <span>f</span> Facebook
+      </button>
+    </div>
+
+    <!-- Links -->
+    <div class="footer-links">
+      <p class="forgot-password">
+        <a href="#">¿Olvidó su clave?</a>
+      </p>
+      <p class="signup-link">
+        ¿Aún no tiene cuenta?
+        <a (click)="goToSignup()" class="link-button">Crear Cuenta</a>
+      </p>
+    </div>
+  </div>
+</div>

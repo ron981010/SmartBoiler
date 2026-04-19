@@ -1,0 +1,99 @@
+<div class="signup-container">
+  <div class="signup-card">
+    <!-- Header -->
+    <div class="logo-section">
+      <div class="logo">💧</div>
+      <h1 class="title">Smart<span class="bold">Boiler</span></h1>
+    </div>
+
+    <div class="subtitle">Crear cuenta</div>
+
+    <!-- Error Message -->
+    <div class="error-message" *ngIf="error">
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Signup Form -->
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="form">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          class="form-input"
+          placeholder="Tu email address"
+          [class.input-error]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched"
+        />
+        <small class="error-text" *ngIf="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+          Email inválido
+        </small>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label class="form-label">Clave</label>
+        <input
+          type="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="••••••••"
+          [class.input-error]="
+            (signupForm.get('password')?.invalid || signupForm.hasError('passwordMismatch'))
+            && (signupForm.get('password')?.touched || signupForm.get('confirmPassword')?.touched)
+          "
+        />
+        <small class="error-text" *ngIf="getPasswordError()">
+          {{ getPasswordError() }}
+        </small>
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div class="form-group">
+        <label class="form-label">Confirmar Clave</label>
+        <input
+          type="password"
+          formControlName="confirmPassword"
+          class="form-input"
+          placeholder="••••••••"
+          [class.input-error]="
+            signupForm.hasError('passwordMismatch')
+            && signupForm.get('confirmPassword')?.touched
+          "
+        />
+      </div>
+
+      <!-- Terms Checkbox -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            formControlName="terms"
+            class="checkbox-input"
+          />
+          <span class="checkbox-text">
+            Acepto los
+            <a href="#">Términos de Servicio y la Política de Privacidad</a>
+          </span>
+        </label>
+        <small class="error-text" *ngIf="signupForm.get('terms')?.invalid && signupForm.get('terms')?.touched">
+          Debes aceptar los términos
+        </small>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn-primary" [disabled]="loading || signupForm.invalid">
+        <span *ngIf="!loading">Registrarse</span>
+        <span *ngIf="loading">Registrando...</span>
+      </button>
+    </form>
+
+    <!-- Login Link -->
+    <div class="footer-link">
+      <p>
+        ¿Tiene una cuenta?
+        <a (click)="goToLogin()" class="link-button">Inicio de Sesión</a>
+      </p>
+    </div>
+  </div>
+</div>
