@@ -103,12 +103,14 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
     try {
       const overlay = document.querySelector('.archive-overlay') as HTMLElement | null;
       if (overlay && overlay !== this._portedOverlayEl) {
+        try { this.renderer.addClass(overlay, 'global-archive-overlay'); } catch {}
         document.body.appendChild(overlay);
         this._portedOverlayEl = overlay;
       }
 
       const panel = document.querySelector('.archive-panel') as HTMLElement | null;
       if (panel && panel !== this._portedArchiveEl) {
+        try { this.renderer.addClass(panel, 'global-archive-panel'); } catch {}
         document.body.appendChild(panel);
         this._portedArchiveEl = panel;
       }

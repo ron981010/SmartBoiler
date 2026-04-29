@@ -326,13 +326,15 @@ export class EnergyFormComponent implements OnInit, AfterViewChecked, OnDestroy 
     try {
       const nav = document.querySelector('.navigation-buttons') as HTMLElement | null;
       if (nav && nav !== this._portedNavEl) {
-        // Append the live element to body (keeps Angular listeners intact)
+        // Add a global class so styles still apply after moving to body
+        try { this.renderer.addClass(nav, 'global-fixed-nav'); } catch {}
         document.body.appendChild(nav);
         this._portedNavEl = nav;
       }
 
       const cont = document.querySelector('.continue-wrap') as HTMLElement | null;
       if (cont && cont !== this._portedContinueEl) {
+        try { this.renderer.addClass(cont, 'global-continue-wrap'); } catch {}
         document.body.appendChild(cont);
         this._portedContinueEl = cont;
       }

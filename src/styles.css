@@ -65,6 +65,88 @@ app-root {
   backface-visibility: hidden;
 }
 
+/* Global styles for ported fixed navigation and archive overlays */
+.global-continue-wrap,
+.global-fixed-nav,
+.global-archive-panel,
+.global-archive-overlay {
+  box-sizing: border-box;
+}
+
+.global-continue-wrap {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: white !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1) !important;
+  width: 100% !important;
+  z-index: 1201 !important;
+}
+
+.global-fixed-nav {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: space-between !important;
+  padding: 12px 16px !important;
+  background: white !important;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.08) !important;
+  width: 100% !important;
+  z-index: 1201 !important;
+}
+
+.global-archive-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(255,255,255,0.28) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 320ms var(--ease-apple), visibility 320ms !important;
+  z-index: 1199 !important;
+  pointer-events: none !important;
+}
+
+.global-archive-overlay.active {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.global-archive-panel {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translate(-50%, 110%) !important;
+  right: auto !important;
+  max-height: 75vh !important;
+  width: 100% !important;
+  max-width: 480px !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.98)) !important;
+  border-radius: 20px 20px 0 0 !important;
+  padding: 20px !important;
+  transition: transform 360ms var(--ease-apple) !important;
+  z-index: 1200 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: 0 -12px 40px rgba(32,45,69,0.12) !important;
+  margin: 0 auto !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+.global-archive-panel.active {
+  transform: translate(-50%, 0%) !important;
+}
+
 .glass{
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur)) saturate(1.05);
