@@ -227,7 +227,7 @@
   padding: 12px 16px;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
-  z-index: 100;
+  z-index: 1201;
   box-sizing: border-box;
 }
 
@@ -687,8 +687,19 @@
   padding: 12px 16px;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
-  z-index: 100;
+  z-index: 1201;
   box-sizing: border-box;
+}
+
+/* Ensure the form content avoids being covered by the fixed nav */
+.form-root {
+  padding-bottom: 96px; /* enough space for nav + comfortable margin */
+}
+
+@media (min-width: 480px) {
+  .form-root {
+    padding-bottom: 96px;
+  }
 }
 
 .nav-btn {
