@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewChecked, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -15,7 +15,7 @@ import * as ApexCharts from 'apexcharts';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DashboardComponent implements OnInit, OnDestroy, AfterViewChecked {
   userEmail = '';
   companyName = '';
   companyImageUrl: string | null = null;
@@ -33,7 +33,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private evaluationService: EvaluationService,
     private companyFichaService: CompanyFichaService
+    , private renderer: Renderer2
   ) {}
+
+  private _portedArchiveEl: HTMLElement | null = null;
+  private _portedOverlayEl: HTMLElement | null = null;
 
   ngOnInit() {
     // Ensure menu is closed on init to avoid visible sliver
@@ -89,6 +93,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (this.trendChart) {
       this.trendChart.destroy();
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    // If archive overlay/panel are present, move them to document.body so
+    // `position: fixed` anchors to the viewport and is unaffected by animated
+    // transforms on ancestor nodes.
+    try {
+      const overlay = document.querySelector('.archive-overlay') as HTMLElement | null;
+      if (overlay && overlay !== this._portedOverlayEl) {
+        document.body.appendChild(overlay);
+        this._portedOverlayEl = overlay;
+      }
+
+      const panel = document.querySelector('.archive-panel') as HTMLElement | null;
+      if (panel && panel !== this._portedArchiveEl) {
+        document.body.appendChild(panel);
+        this._portedArchiveEl = panel;
+      }
+    } catch (e) {
+      // ignore timing errors
     }
   }
 

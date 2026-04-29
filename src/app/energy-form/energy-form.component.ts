@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewChecked, OnDestroy, Renderer2 } from '@angular/core';
 import { FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -31,7 +31,7 @@ interface FieldConfig {
   templateUrl: './energy-form.component.html',
   styleUrls: ['./energy-form.component.css']
 })
-export class EnergyFormComponent implements OnInit {
+export class EnergyFormComponent implements OnInit, AfterViewChecked, OnDestroy {
   private readonly DEFAULT_OPERATION_HOURS = 7920;
   private readonly DEFAULT_COST_VALUES = [8.0, 3.0, 2.0, 1.3, 1.0, 6.0, 78.7];
 
@@ -195,8 +195,13 @@ export class EnergyFormComponent implements OnInit {
     private calderosService: CalderosService,
     private companyService: CompanyFichaService,
     private plantService: PlantsFichaService,
-    private router: Router
+    private router: Router,
+    private renderer: Renderer2
   ) { }
+
+  // Keep references to elements we port to document.body so we can clean up
+  private _portedNavEl: HTMLElement | null = null;
+  private _portedContinueEl: HTMLElement | null = null;
 
   ngOnInit(): void {
     const now = new Date();
@@ -312,6 +317,35 @@ export class EnergyFormComponent implements OnInit {
       field.valueControl.valueChanges.subscribe(() => this.updateFieldStandard(field));
       field.unitControl.valueChanges.subscribe(() => this.updateFieldStandard(field));
     });
+  }
+
+  ngAfterViewChecked(): void {
+    // Port the currently visible navigation buttons to document.body so
+    // `position: fixed` anchors to the viewport even when route animations
+    // apply CSS transforms to intermediate ancestors.
+    try {
+      const nav = document.querySelector('.navigation-buttons') as HTMLElement | null;
+      if (nav && nav !== this._portedNavEl) {
+        // Append the live element to body (keeps Angular listeners intact)
+        document.body.appendChild(nav);
+        this._portedNavEl = nav;
+      }
+
+      const cont = document.querySelector('.continue-wrap') as HTMLElement | null;
+      if (cont && cont !== this._portedContinueEl) {
+        document.body.appendChild(cont);
+        this._portedContinueEl = cont;
+      }
+    } catch (e) {
+      // ignore DOM timing errors
+      // console.warn('EnergyForm porting error', e);
+    }
+  }
+
+  ngOnDestroy(): void {
+    // No need to restore elements — they are destroyed with the component.
+    this._portedNavEl = null;
+    this._portedContinueEl = null;
   }
 
   updateFieldStandard(field: FieldConfig) {
