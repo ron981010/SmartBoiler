@@ -202,6 +202,7 @@ export class EnergyFormComponent implements OnInit, AfterViewChecked, OnDestroy 
   // Keep references to elements we port to document.body so we can clean up
   private _portedNavEl: HTMLElement | null = null;
   private _portedContinueEl: HTMLElement | null = null;
+  private _navListeners: Array<() => void> = [];
 
   ngOnInit(): void {
     const now = new Date();
@@ -330,6 +331,8 @@ export class EnergyFormComponent implements OnInit, AfterViewChecked, OnDestroy 
         try { this.renderer.addClass(nav, 'global-fixed-nav'); } catch {}
         document.body.appendChild(nav);
         this._portedNavEl = nav;
+        // attach manual listeners to ensure clicks call component methods
+        this._attachNavListeners(nav);
       }
 
       const cont = document.querySelector('.continue-wrap') as HTMLElement | null;
@@ -348,6 +351,31 @@ export class EnergyFormComponent implements OnInit, AfterViewChecked, OnDestroy 
     // No need to restore elements — they are destroyed with the component.
     this._portedNavEl = null;
     this._portedContinueEl = null;
+    // remove manual listeners
+    this._navListeners.forEach(dispose => dispose());
+    this._navListeners = [];
+  }
+
+  private _attachNavListeners(nav: HTMLElement) {
+    try {
+      // clear previous listeners
+      this._navListeners.forEach(d => d());
+      this._navListeners = [];
+
+      const prev = nav.querySelector('.nav-btn-prev') as HTMLElement | null;
+      const next = nav.querySelector('.nav-btn-next') as HTMLElement | null;
+      const center = nav.querySelector('.nav-btn-center') as HTMLElement | null;
+      const back = nav.querySelector('.continue-back-btn') as HTMLElement | null;
+      const contNext = nav.querySelector('.continue-btn') as HTMLElement | null;
+
+      if (prev) this._navListeners.push(this.renderer.listen(prev, 'click', () => this.prevScreen()));
+      if (next) this._navListeners.push(this.renderer.listen(next, 'click', () => this.nextScreen()));
+      if (center) this._navListeners.push(this.renderer.listen(center, 'click', () => this.clearCurrentScreen()));
+      if (back) this._navListeners.push(this.renderer.listen(back, 'click', () => this.backToDashboard()));
+      if (contNext) this._navListeners.push(this.renderer.listen(contNext, 'click', () => this.nextScreen()));
+    } catch (e) {
+      // ignore
+    }
   }
 
   updateFieldStandard(field: FieldConfig) {
