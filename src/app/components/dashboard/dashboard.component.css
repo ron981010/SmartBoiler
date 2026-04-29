@@ -716,3 +716,16 @@
   font-size: 14px;
   padding: 32px 0;
 }
+
+/* Force-hide hamburger menu by default to prevent visible sliver on load.
+   Active state still allows the intended transform animation. */
+.hamburger-menu {
+  transform: translateX(calc(100% + 36px)) !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+}
+.hamburger-menu.active {
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+  box-shadow: -8px 16px 40px rgba(32,45,69,0.12) !important;
+}

@@ -13,7 +13,7 @@ import * as ApexCharts from 'apexcharts';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   userEmail = '';
@@ -36,6 +36,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    // Ensure menu is closed on init to avoid visible sliver
+    this.menuOpen = false;
+    // Small safeguard in case other lifecycle hooks toggle it
+    setTimeout(() => { this.menuOpen = false; }, 40);
+
     // Get current user email
     const user = this.authService.getCurrentUser();
     this.userEmail = user?.email || 'usuario@email.com';
