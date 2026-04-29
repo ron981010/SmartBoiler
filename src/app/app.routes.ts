@@ -16,36 +16,43 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    component: LoginComponent
+    component: LoginComponent,
+    data: { animation: 'LoginPage' }
   },
   {
     path: 'signup',
-    component: SignupComponent
+    component: SignupComponent,
+    data: { animation: 'SignupPage' }
   },
   {
     path: 'dashboard',
     component: DashboardComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { animation: 'DashboardPage' }
   },
   {
     path: 'new-evaluation',
     component: EnergyFormComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { animation: 'NewEvaluationPage' }
   },
   {
     path: 'company-ficha',
     component: CompanyFichaComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { animation: 'CompanyFichaPage' }
   },
   {
     path: 'plants-ficha',
     component: PlantsFichaComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { animation: 'PlantsFichaPage' }
   },
   {
     path: 'calderos-ficha',
     component: CalderosComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    data: { animation: 'CalderosPage' }
   },
   {
     path: '**',

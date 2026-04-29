@@ -130,7 +130,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           theme: 'light'
         }
       });
-      this.evaluationChart.render();
+      try {
+        this.evaluationChart.render();
+      } catch (err) {
+        console.warn('ApexCharts evaluationChart render error:', err);
+      }
     }
 
     // Trend Line Chart
@@ -194,7 +198,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
           theme: 'light'
         }
       });
-      this.trendChart.render();
+      try {
+        this.trendChart.render();
+      } catch (err) {
+        console.warn('ApexCharts trendChart render error:', err);
+      }
     }
   }
 
