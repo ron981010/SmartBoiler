@@ -325,7 +325,22 @@ export class EnergyFormComponent implements OnInit, AfterViewChecked, OnDestroy 
     // `position: fixed` anchors to the viewport even when route animations
     // apply CSS transforms to intermediate ancestors.
     try {
-      const nav = document.querySelector('.navigation-buttons') as HTMLElement | null;
+      // Prefer result-specific footer actions when available
+      const resultsFooter = document.querySelector('.results-footer-bottom') as HTMLElement | null;
+      let nav: HTMLElement | null = null;
+
+      if (resultsFooter && resultsFooter.getBoundingClientRect().height > 0) {
+        nav = resultsFooter;
+      } else {
+        // find visible .navigation-buttons elements and prefer the last visible one
+        const nodes = Array.from(document.querySelectorAll('.navigation-buttons')) as HTMLElement[];
+        for (let i = nodes.length - 1; i >= 0; i--) {
+          const n = nodes[i];
+          const r = n.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) { nav = n; break; }
+        }
+      }
+
       if (nav && nav !== this._portedNavEl) {
         // Add a global class so styles still apply after moving to body
         try { this.renderer.addClass(nav, 'global-fixed-nav'); } catch {}
