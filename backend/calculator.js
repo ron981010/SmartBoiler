@@ -76,6 +76,10 @@ function calcula_humedad(Ta, HR) {
 
 
 function calcula_perdidas(IB, I20) {
+  if (IB === -1) {
+    // Omitir (aproximado): polinomio basado en CO
+    return 0.000000000221 * Math.pow(I20, 3) - 0.00000188 * Math.pow(I20, 2) + 0.00687 * I20 - 0.0534;
+  }
   if (IB >= 0 && IB < PT_IB.length) {
     return PT_IB[Math.floor(IB)];
   }
@@ -280,9 +284,9 @@ function clasifica_pt(pt) {
   return 'Muy peligrosa';
 }
 
-function calcula_rocio_acido_excel(n_so3, n_h2o_comb, n_total) {
-  if (n_so3 <= 0 || n_h2o_comb <= 0 || n_total <= 0) return 777;
-  const ratio_h2o = n_h2o_comb / n_total;
+function calcula_rocio_acido_excel(n_so3, n_h2o, n_total) {
+  if (n_so3 <= 0 || n_h2o <= 0 || n_total <= 0) return 777;
+  const ratio_h2o = n_h2o / n_total;
   const ratio_so3 = n_so3 / n_total;
   return (203.25
           + 27.6  * Math.log10(ratio_h2o)
@@ -290,6 +294,61 @@ function calcula_rocio_acido_excel(n_so3, n_h2o_comb, n_total) {
           + 1.06  * Math.pow(Math.log10(ratio_so3 + 8.0), 2.19));
 }
 
+// Coeficientes de entalpía H(T) = a·T⁴ + b·T³ + c·T² + d·T  (T en °C, H en kcal/kmol)
+// Derivados de integrar Cp(T): a_H = a_Cp/4, b_H = b_Cp/3, c_H = c_Cp/2, d_H = d_Cp
+// Orden: CO, O2, N2, H2O, SO2, C, CO2
+const COEF_H_LLAMA = [
+  { PM: PMCO,   a: 0,            b: 0,            c: 0.0003,    d: 6.9276 },
+  { PM: PMO2,   a: 2.72675e-11,  b:-2.2197e-7,    c: 0.001380,  d: 7.5181 },
+  { PM: PMN2,   a: 0,            b: 0,            c: 0.00025,   d: 6.773  },
+  { PM: PMH2O,  a: 0,            b: 1.489e-7,     c: 0.0002204, d: 8.361  },
+  { PM: PMSO2,  a: 0,            b:-9.2233e-8,    c: 0.0012115, d: 9.085  },
+  { PM: PMC,    a: 1.6982e-11,   b:-1.38243e-7,   c: 0.001112,  d: 2.4805 },
+  { PM: PMCO2,  a: 2.84e-11,     b:-2.312e-7,     c: 0.0014505, d: 9.571  },
+];
+
+/**
+ * Calcula la temperatura de llama adiabática por Newton-Raphson.
+ * F(T)  = QN − Σ (R_i/PM_i)·(a·T⁴ + b·T³ + c·T² + d·T)
+ * F'(T) =    − Σ (R_i/PM_i)·(4a·T³ + 3b·T² + 2c·T + d)
+ * Convergencia: |T1−T2| < 0.2 °C
+ */
+function bucle_temperatura_llama(R21, R22, R23, R24, R25, R26, R27, QN, maxit = 50) {
+  // Flujos másicos asociados a cada coeficiente (mismo orden que COEF_H_LLAMA)
+  const R = [R22, R23, R24, R25, R26, R27, R21];
+
+  const FT = T => {
+    let sum = 0;
+    for (let i = 0; i < 7; i++) {
+      const g = COEF_H_LLAMA[i];
+      sum += (R[i] / g.PM) * (g.a*T*T*T*T + g.b*T*T*T + g.c*T*T + g.d*T);
+    }
+    return QN - sum;
+  };
+
+  const FpT = T => {
+    let sum = 0;
+    for (let i = 0; i < 7; i++) {
+      const g = COEF_H_LLAMA[i];
+      sum += (R[i] / g.PM) * (4*g.a*T*T*T + 3*g.b*T*T + 2*g.c*T + g.d);
+    }
+    return -sum;
+  };
+
+  let T1 = 1000; // °C – estimación inicial
+  for (let iter = 0; iter < maxit; iter++) {
+    const ft  = FT(T1);
+    const fpt = FpT(T1);
+    if (Math.abs(fpt) < 1e-9) break;
+    const T2 = T1 - ft / fpt;
+    if (Math.abs(T1 - T2) < 0.2) return T2;
+    T1 = T2;
+  }
+  return T1;
+}
+
+// I36 = tiempo de operación [h/año]
+// r46–r49: emisiones anuales [kg/h × h/año ÷ 1000 = ton/año]
 function calcula_ratios(R21, R22, R26, R27, R29, I36) {
   const r42 = (R21 / R29) * 1000000;
   const r43 = (R22 / R29) * 1000000;
@@ -400,13 +459,13 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
   const R1A = clasifica_pt(Pt);
   const R1B = (n - 1) * 100;
   const R1C = (R17 !== 0 && R15 !== 0) ? R17 / R15 : 777;
-  const R2B = R29 !== 0 ? (R37 / R29) * 100 : 777;
+  const R2B = Pt;
   const R2C = R29 !== 0 ? (R38 / R29) * 100 : 777;
 
   // PRO
-  const R5_val = (B235 - HLw) / 470;
-  const capacidad_produccion = (I2 && I2 !== 0 && R5_val !== 777) ? I2 * R5_val : 777;
-  const R4_val = (capacidad_produccion !== 777 && capacidad_produccion !== 0) ? (R19 / capacidad_produccion) * 100 : 777;
+  const _deltaH = B235 - HLw;
+  const R5_val  = _deltaH > 0 ? 539 / _deltaH : 777;
+  const R4_val  = (I2 && I2 !== 0 && R5_val !== 777) ? (R19 / (I2 * R5_val)) * 100 : 777;
   const R6A_val = R19 !== 0 ? R29 / R19 : 777;
   const superficie_m2 = (I3 && I3 !== 0) ? I3 * FT2_TO_M2 : 777;
   const R6B_val = (superficie_m2 !== 777 && superficie_m2 !== 0) ? R19 / superficie_m2 : 777;
@@ -419,7 +478,7 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
     + (n * (a + b / 4.0 + e) - x - y / 2.0 - b / 4.0 - e)
     + ((79.0 / 21.0) * (n * (a + b / 4.0 + e) - c / 2.0) + d / 2.0)
     + n_h2o_moles + e + ((1 - f_conv) * a);
-  const R50_val = calcula_rocio_acido_excel(e, n_h2o_comb_moles, n_total_moles);
+  const R50_val = calcula_rocio_acido_excel(e, n_h2o_moles, n_total_moles);
 
   const rd = (v) => Math.round(v * 100) / 100;
 
@@ -462,7 +521,11 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
     R2A: rd(f_conv * 100),
     R2B: R2B !== 777 ? rd(R2B) : 777,
     R2C: R2C !== 777 ? rd(R2C) : 777,
-    R3:  777,
+    R3:  (() => {
+      const QN_llama = R29 + R30 + R31 + R32 - R37 - R38 - (R39 !== 777 ? R39 : 0);
+      const T_llama = bucle_temperatura_llama(R21, R22, R23, R24_adj, R25, R26, R27, QN_llama);
+      return Math.round(T_llama * 10) / 10;
+    })(),
     // PRO
     R4:  R4_val !== 777 ? Math.round(R4_val * 10) / 10 : 777,
     R5:  rd(R5_val),

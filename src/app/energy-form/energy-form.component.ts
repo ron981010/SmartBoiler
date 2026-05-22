@@ -746,7 +746,7 @@ export class EnergyFormComponent implements OnInit {
       },
       combustion: {
         excesoAire:                  r.R1B,
-        gradoConversionCombustible:  r.R2A,
+        gradoConversionCombustible:  +(100 - r.PT).toFixed(1),
         eficienciaCombustion:        +pctU.toFixed(1),
       },
       carga: {
@@ -760,8 +760,8 @@ export class EnergyFormComponent implements OnInit {
         costoVapor:                r.R7,
       },
       eficiencia: {
-        calorUtil:          { btu: fmt(r.R35), percent: +pctU.toFixed(1) },
-        perdidasChimenea:   { btu: fmt(r.R36), percent: +pctC.toFixed(1) },
+        calorUtil:          { btu: fmt(r.R9),  percent: +pctU.toFixed(1) },
+        perdidasChimenea:   { btu: fmt(r.R10), percent: +pctC.toFixed(1) },
         perdidasInquemados: { btu: fmt(r.R37), percent: +pctS.toFixed(1) },
         perdidasInquemadosGas: { btu: fmt(r.R38), percent: +pctG.toFixed(1) },
         perdidasRC:         { btu: r.R39 !== 777 ? fmt(r.R39) : '777', percent: pctR !== 777 ? +pctR.toFixed(1) : 777 },
@@ -915,6 +915,13 @@ export class EnergyFormComponent implements OnInit {
     const pct = p[type];
     const len = (pct / 100) * circ;
     return `${len} ${circ}`;
+  }
+
+  /** stroke-dasharray para arco SVG semicircular (max fill = 251.3).
+   *  maxVal=100 si value es porcentaje; maxVal=1.5 para Factor de Evaporación */
+  getGaugeArc(value: number, maxVal: number = 100): string {
+    const pct = Math.min(Math.max(value / maxVal, 0), 1);
+    return `${(pct * 251.3).toFixed(1)} 502.6`;
   }
 
   getEfiPieOffset(type: 'chimenea' | 'rc' | 'inq'): string {
@@ -1072,7 +1079,7 @@ export class EnergyFormComponent implements OnInit {
 
     const items = [
       { label: 'Aire', value: this.parseNumeric(entradas.aireCombustion?.val) || 0, section: 'in' as const },
-      { label: 'H.Aire', value: this.parseNumeric(entradas.aguaAlimentacion?.val) || 0, section: 'in' as const },
+      { label: 'Agua', value: this.parseNumeric(entradas.aguaAlimentacion?.val) || 0, section: 'in' as const },
       { label: 'Comb.', value: this.parseNumeric(entradas.combustible?.val) || 0, section: 'in' as const },
       { label: 'CO2', value: this.parseNumeric(salidas.co2?.val) || 0, section: 'out' as const },
       { label: 'N2', value: this.parseNumeric(salidas.n2?.val) || 0, section: 'out' as const },

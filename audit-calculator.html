@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartBoiler – Auditoría de Cálculos</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #d4d4d4; min-height: 100vh; }
+
+  header {
+    background: #1a1d27;
+    border-bottom: 2px solid #2563eb;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 600; color: #93c5fd; letter-spacing: .5px; }
+  header span { font-size: .8rem; color: #6b7280; }
+
+  .layout { display: grid; grid-template-columns: 380px 1fr; height: calc(100vh - 57px); overflow: hidden; }
+
+  /* ── LEFT PANEL (inputs) ── */
+  .panel-inputs { background: #13151f; overflow-y: auto; border-right: 1px solid #1f2333; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+
+  .input-section { margin-bottom: 8px; }
+  .input-section-title {
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #2563eb; padding: 6px 4px 4px; border-bottom: 1px solid #1e2840; margin-bottom: 6px;
+  }
+
+  .input-row { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+  .input-row label { flex: 1; font-size: .78rem; color: #9ca3af; white-space: nowrap; }
+  .input-row label span { font-size: .68rem; color: #4b5563; display: block; }
+  .input-row input, .input-row select {
+    width: 110px; background: #1c1f2e; border: 1px solid #2d3148; border-radius: 4px;
+    color: #e2e8f0; font-size: .8rem; padding: 4px 8px; text-align: right; outline: none;
+    transition: border-color .15s;
+  }
+  .input-row input:focus, .input-row select:focus { border-color: #2563eb; }
+  .input-row select { text-align: left; }
+
+  .btn-row { display: flex; gap: 8px; padding: 12px 0 4px; }
+  .btn {
+    flex: 1; padding: 9px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: .82rem; font-weight: 600; transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-secondary { background: #1f2333; color: #9ca3af; border: 1px solid #2d3148; }
+
+  /* ── RIGHT PANEL (log + results) ── */
+  .panel-right { display: flex; flex-direction: column; overflow: hidden; }
+
+  .tab-bar {
+    display: flex; background: #13151f; border-bottom: 1px solid #1f2333;
+    padding: 0 16px; gap: 2px; flex-shrink: 0;
+  }
+  .tab-btn {
+    padding: 10px 16px; font-size: .78rem; border: none; background: none;
+    color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn.active { color: #93c5fd; border-bottom-color: #2563eb; }
+
+  .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
+  .tab-content.active { display: block; }
+
+  /* Log entries */
+  .log-wrap { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: .76rem; line-height: 1.7; }
+  .log-section {
+    background: #1a1d27; border-left: 3px solid #2563eb; padding: 8px 12px;
+    margin: 10px 0 4px; border-radius: 0 4px 4px 0;
+  }
+  .log-section span { color: #60a5fa; font-weight: 700; font-size: .8rem; }
+  .log-row { display: flex; gap: 8px; padding: 1px 4px; }
+  .log-row .k { color: #94a3b8; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-row .v { color: #a3e635; text-align: right; white-space: nowrap; min-width: 120px; }
+  .log-row .u { color: #4b5563; font-size: .7rem; min-width: 60px; }
+  .log-warn { background: #2d1f07; border-left: 3px solid #f59e0b; padding: 4px 10px; margin: 2px 0; border-radius: 0 3px 3px 0; color: #fbbf24; }
+  .log-ok   { background: #072d1a; border-left: 3px solid #22c55e; padding: 4px 10px; margin: 2px 0; border-radius: 0 3px 3px 0; color: #86efac; }
+  .log-err  { background: #2d0707; border-left: 3px solid #ef4444; padding: 4px 10px; margin: 2px 0; border-radius: 0 3px 3px 0; color: #fca5a5; }
+  .log-iter { background: #111827; border: 1px solid #1e2840; padding: 6px 10px; margin: 4px 0; border-radius: 4px; }
+  .log-iter summary { color: #60a5fa; cursor: pointer; font-size: .77rem; list-style: none; }
+  .log-iter summary::before { content: '▶ '; font-size: .65rem; }
+  .log-iter[open] summary::before { content: '▼ '; }
+
+  /* Results table */
+  .results-grid { display: grid; gap: 12px; }
+  .res-card { background: #13151f; border: 1px solid #1f2333; border-radius: 8px; overflow: hidden; }
+  .res-card-title { background: #1a1d27; padding: 8px 14px; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #60a5fa; border-bottom: 1px solid #1f2333; }
+  .res-table { width: 100%; border-collapse: collapse; }
+  .res-table tr:hover td { background: #1a1d27; }
+  .res-table td { padding: 5px 12px; font-size: .78rem; border-bottom: 1px solid #111827; }
+  .res-table td:first-child { color: #6b7280; width: 50%; }
+  .res-table td:last-child { color: #a3e635; font-family: monospace; text-align: right; }
+  .res-table td.unit { color: #374151; font-size: .7rem; width: 15%; text-align: left; padding-left: 6px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: .72rem; font-weight: 600; }
+  .badge-green { background: #14532d; color: #86efac; }
+  .badge-yellow { background: #451a03; color: #fde68a; }
+  .badge-red { background: #450a0a; color: #fca5a5; }
+
+  .placeholder { color: #374151; text-align: center; padding: 60px 20px; font-size: .9rem; }
+  .placeholder svg { display: block; margin: 0 auto 12px; opacity: .3; }
+
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+  <h1>SmartBoiler — Auditoría de Cálculos</h1>
+  <span>calculator.js · paso a paso</span>
+</header>
+
+<div class="layout">
+
+  <!-- ══ PANEL IZQUIERDO: INPUTS ══ -->
+  <div class="panel-inputs" id="panel-inputs">
+
+    <div class="input-section">
+      <div class="input-section-title">Combustible y vapor</div>
+      <div class="input-row">
+        <label>Combustible</label>
+        <select id="f_combustible">
+          <option value="Gas Natural (Camisea)">Gas Natural (Camisea)</option>
+          <option value="Gas Natural (Talara)">Gas Natural (Talara)</option>
+          <option value="GLP">GLP</option>
+          <option value="Diesel" selected>Diesel</option>
+          <option value="P.I. 6">P.I. 6</option>
+          <option value="P.I. 500">P.I. 500</option>
+        </select>
+      </div>
+      <div class="input-row">
+        <label>Tipo de vapor</label>
+        <select id="f_vapor">
+          <option value="Saturado" selected>Saturado</option>
+          <option value="Sobrecalentado">Sobrecalentado</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-title">Combustión y aire</div>
+      <div class="input-row"><label>I9 – Flujo combustible <span>kg/h</span></label><input type="number" id="f_I9" value="1739.3"></div>
+      <div class="input-row"><label>I10 – Temp. combustible <span>°C</span></label><input type="number" id="f_I10" value="32"></div>
+      <div class="input-row"><label>I11 – Temp. ambiente <span>°C</span></label><input type="number" id="f_I11" value="30"></div>
+      <div class="input-row"><label>I12 – Humedad relativa <span>%</span></label><input type="number" id="f_I12" value="50"></div>
+      <div class="input-row"><label>I13 – Vel. viento <span>m/s</span></label><input type="number" id="f_I13" value="1.78"></div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-title">Gases de chimenea</div>
+      <div class="input-row"><label>I19 – O₂ chimenea <span>%</span></label><input type="number" id="f_I19" value="7"></div>
+      <div class="input-row"><label>I20 – CO chimenea <span>ppm</span></label><input type="number" id="f_I20" value="350"></div>
+      <div class="input-row"><label>I21 – Temp. gases <span>°C</span></label><input type="number" id="f_I21" value="262.8"></div>
+      <div class="input-row">
+        <label>I22 – Índice Bacharach</label>
+        <select id="f_I22">
+          <option value="-1">Omitir (aproximado)</option>
+          <option value="0">0</option><option value="1">1</option><option value="2">2</option>
+          <option value="3" selected>3</option><option value="4">4</option><option value="5">5</option>
+          <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-title">Agua y vapor</div>
+      <div class="input-row"><label>I14 – Temp. agua entrada <span>°C</span></label><input type="number" id="f_I14" value="120"></div>
+      <div class="input-row"><label>I15 – Flujo purga <span>kg/h</span></label><input type="number" id="f_I15" value="3.6"></div>
+      <div class="input-row"><label>I16 – Flujo agua total <span>kg/h</span></label><input type="number" id="f_I16" value="402.6"></div>
+      <div class="input-row"><label>I17 – Presión vapor <span>PSI</span></label><input type="number" id="f_I17" value="200"></div>
+      <div class="input-row"><label>I18 – Temp. vapor (SC) <span>°C</span></label><input type="number" id="f_I18" value="250"></div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-title">Superficies (opcional)</div>
+      <div class="input-row"><label>I23 – Temp. sup. fondo <span>°C</span></label><input type="number" id="f_I23" value="43"></div>
+      <div class="input-row"><label>I24 – Temp. sup. lateral <span>°C</span></label><input type="number" id="f_I24" value="53"></div>
+      <div class="input-row"><label>I25 – Temp. sup. posterior <span>°C</span></label><input type="number" id="f_I25" value="61"></div>
+      <div class="input-row"><label>I26 – Temp. sup. anterior <span>°C</span></label><input type="number" id="f_I26" value="60"></div>
+      <div class="input-row"><label>I4H – Diámetro caldera <span>m</span></label><input type="number" id="f_I4H" value="3.6"></div>
+      <div class="input-row"><label>I5H – Largo caldera <span>m</span></label><input type="number" id="f_I5H" value="5"></div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-title">Costos y emisiones</div>
+      <div class="input-row"><label>I35 – Precio combustible <span>US$/unidad</span></label><input type="number" id="f_I35" value="7.5"></div>
+      <div class="input-row"><label>I36 – Tiempo de operación <span>h/año</span></label><input type="number" id="f_I36" value="7920"></div>
+      <div class="input-row"><label>I37 – % Mano de obra</label><input type="number" id="f_I37" value="8"></div>
+      <div class="input-row"><label>I38 – % Electricidad</label><input type="number" id="f_I38" value="3"></div>
+      <div class="input-row"><label>I39 – % Agua</label><input type="number" id="f_I39" value="2"></div>
+      <div class="input-row"><label>I40 – % Purgas</label><input type="number" id="f_I40" value="1.3"></div>
+      <div class="input-row"><label>I41 – % Químicos</label><input type="number" id="f_I41" value="1"></div>
+      <div class="input-row"><label>I42 – % Depreciación</label><input type="number" id="f_I42" value="6"></div>
+    </div>
+
+    <div class="input-section">
+      <div class="input-section-title">Producción (opcional)</div>
+      <div class="input-row"><label>I2 – Consumo nominal <span>kg vapor/h</span></label><input type="number" id="f_I2" value="49896"></div>
+      <div class="input-row"><label>I3 – Área sup. <span>ft²</span></label><input type="number" id="f_I3" value="300"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="runAudit()">▶ Calcular</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Limpiar</button>
+    </div>
+  </div>
+
+  <!-- ══ PANEL DERECHO: TABS ══ -->
+  <div class="panel-right">
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="log" onclick="switchTab(this,'log')">📋 Log paso a paso</button>
+      <button class="tab-btn" data-tab="bms" onclick="switchTab(this,'bms')">⚖️ Balance masa</button>
+      <button class="tab-btn" data-tab="ben" onclick="switchTab(this,'ben')">🔥 Balance energía</button>
+      <button class="tab-btn" data-tab="com" onclick="switchTab(this,'com')">📊 COM / EFI / EMI</button>
+    </div>
+
+    <div id="tab-log" class="tab-content active">
+      <div class="placeholder" id="log-placeholder">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Presiona <b>Calcular</b> para ver el log paso a paso
+      </div>
+      <div class="log-wrap" id="log-output" style="display:none"></div>
+    </div>
+
+    <div id="tab-bms" class="tab-content">
+      <div class="placeholder" id="bms-placeholder">Presiona <b>Calcular</b> para ver el balance de masa</div>
+      <div id="bms-output" style="display:none"></div>
+    </div>
+
+    <div id="tab-ben" class="tab-content">
+      <div class="placeholder" id="ben-placeholder">Presiona <b>Calcular</b> para ver el balance de energía</div>
+      <div id="ben-output" style="display:none"></div>
+    </div>
+
+    <div id="tab-com" class="tab-content">
+      <div class="placeholder" id="com-placeholder">Presiona <b>Calcular</b> para ver los indicadores</div>
+      <div id="com-output" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- LÓGICA DE CÁLCULO (ported from calculator.js)    -->
+<!-- ══════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+// ── CONSTANTES ─────────────────────────────────────────────
+const COMBUSTIBLES = {
+  'Gas Natural (Camisea)': { C:74.710, H:23.637, O:0.448,  N:1.205,  S:0.0001, PCI:11619, C1:0.5306, C2:0.00036 },
+  'Gas Natural (Talara)':  { C:74.498, H:23.442, O:1.666,  N:0.393,  S:0.0001, PCI:11514, C1:0.5306, C2:0.00036 },
+  'GLP':                   { C:82.2198,H:17.77,  O:0.0001, N:0.0001, S:0.01,   PCI:11683, C1:0.5162, C2:0.00044 },
+  'Diesel':                { C:86.63,  H:11.82,  O:0.90,   N:0.32,   S:0.32,   PCI:10166, C1:0.4345, C2:0.00044 },
+  'P.I. 6':                { C:88.09,  H:10.04,  O:0.35,   N:0.13,   S:1.30,   PCI:9769,  C1:0.4025, C2:0.00044 },
+  'P.I. 500':              { C:88.19,  H:9.99,   O:0.15,   N:0.05,   S:1.50,   PCI:9764,  C1:0.4016, C2:0.00044 },
+};
+const PT_IB = [0.1,0.4,1.0,2.1,3.0,4.5,6.1,7.9,10.0,12.4];
+const PMC=12,PMH=1,PMO=16,PMN=14,PMS=32,PMCO=28,PMCO2=44,PMO2=32,PMN2=28,PMSO2=64;
+const DHC=7831,DHCO=2415,Tr=0,TOL=0.001,SIGMA=5.67e-8,EMISIVIDAD=0.9;
+const AIRE_PESO = 32*0.23 + 28*0.77;
+
+// ── SOLVER CRAMER 3×3 ──────────────────────────────────────
+function solve3x3(A,D){
+  const det3 = m => m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+                  - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])
+                  + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+  const detA = det3(A);
+  if(Math.abs(detA)<1e-15) throw new Error('Sistema singular');
+  const rc = j => A.map((r,i)=>r.map((v,k)=>k===j?D[i]:v));
+  return [det3(rc(0))/detA, det3(rc(1))/detA, det3(rc(2))/detA];
+}
+
+// ── LOG BUILDER ────────────────────────────────────────────
+let logEl, warnings=[];
+
+function sec(title, color='#2563eb'){
+  const d = document.createElement('div');
+  d.className = 'log-section';
+  d.style.borderLeftColor = color;
+  d.innerHTML = `<span style="color:${color}">${title}</span>`;
+  logEl.appendChild(d);
+}
+
+function logRow(label, value, unit=''){
+  const d = document.createElement('div'); d.className = 'log-row';
+  const v = typeof value === 'number' ? value.toFixed(6) : String(value);
+  d.innerHTML = `<span class="k">${label}</span><span class="v">${v}</span><span class="u">${unit}</span>`;
+  logEl.appendChild(d);
+}
+
+function logWarn(msg){
+  warnings.push(msg);
+  const d = document.createElement('div'); d.className = 'log-warn';
+  d.textContent = '⚠ ' + msg; logEl.appendChild(d);
+}
+
+function logOk(msg){
+  const d = document.createElement('div'); d.className = 'log-ok';
+  d.textContent = '✓ ' + msg; logEl.appendChild(d);
+}
+
+function logErr(msg){
+  const d = document.createElement('div'); d.className = 'log-err';
+  d.textContent = '✖ ' + msg; logEl.appendChild(d);
+}
+
+function logIterBlock(iter, rows){
+  const det = document.createElement('details'); det.className = 'log-iter';
+  // auto-open last iter
+  const summ = document.createElement('summary');
+  summ.textContent = `Iteración ${iter}`;
+  det.appendChild(summ);
+  rows.forEach(r => {
+    const d = document.createElement('div'); d.className = 'log-row';
+    d.innerHTML = `<span class="k" style="padding-left:12px">${r[0]}</span><span class="v">${typeof r[1]==='number'?r[1].toFixed(6):r[1]}</span><span class="u">${r[2]||''}</span>`;
+    det.appendChild(d);
+  });
+  logEl.appendChild(det);
+  return det;
+}
+
+// ── TABLA DE RESULTADOS ────────────────────────────────────
+function makeCard(title, rows){
+  return `<div class="res-card">
+    <div class="res-card-title">${title}</div>
+    <table class="res-table">${rows.map(r=>`<tr>
+      <td>${r[0]}</td>
+      <td>${typeof r[1]==='number'?r[1].toFixed(2):r[1]}</td>
+      <td class="unit">${r[2]||''}</td>
+    </tr>`).join('')}</table>
+  </div>`;
+}
+
+function badge(pt){
+  const cls = pt<1.55?'badge-green':pt<3.75?'badge-yellow':'badge-red';
+  const txt = pt<0.25?'Excelente':pt<0.7?'Muy buena':pt<1.55?'Buena':pt<2.55?'Aceptable':pt<3.75?'Pobre':pt<5.3?'Deficiente':pt<7?'Muy deficiente':pt<8.95?'Critica':pt<11?'Peligrosa':'Muy peligrosa';
+  return `<span class="badge ${cls}">${txt}</span>`;
+}
+
+// ── LECTURA DE INPUTS ──────────────────────────────────────
+function readInputs(){
+  const g = id => parseFloat(document.getElementById(id).value)||0;
+  const gs = id => document.getElementById(id).value;
+  return {
+    tipo_combustible: gs('f_combustible'),
+    tipo_vapor: gs('f_vapor'),
+    I2: g('f_I2'), I3: g('f_I3'),
+    I9: g('f_I9'), I10: g('f_I10'), I11: g('f_I11'), I12: g('f_I12'), I13: g('f_I13'),
+    I14: g('f_I14'), I15: g('f_I15'), I16: g('f_I16'), I17: g('f_I17'), I18: g('f_I18'),
+    I19: g('f_I19'), I20: g('f_I20'), I21: g('f_I21'), I22: g('f_I22'),
+    I23: g('f_I23'), I24: g('f_I24'), I25: g('f_I25'), I26: g('f_I26'),
+    I4H: g('f_I4H'), I5H: g('f_I5H'),
+    I35: g('f_I35'), I36: g('f_I36'),
+    I37: g('f_I37'), I38: g('f_I38'), I39: g('f_I39'),
+    I40: g('f_I40'), I41: g('f_I41'), I42: g('f_I42'),
+  };
+}
+
+// ── CÁLCULO PRINCIPAL ──────────────────────────────────────
+function runAudit(){
+  warnings = [];
+  logEl = document.getElementById('log-output');
+  logEl.innerHTML = '';
+  logEl.style.display = 'block';
+  document.getElementById('log-placeholder').style.display = 'none';
+
+  const inp = readInputs();
+  const {tipo_combustible, tipo_vapor} = inp;
+  const p = COMBUSTIBLES[tipo_combustible];
+  if(!p){ logErr(`Combustible '${tipo_combustible}' no reconocido`); return; }
+
+  try {
+    // ── PASO 1: Balance de materia ─────────────────────────
+    sec('PASO 1 – Balance de materia (composición del combustible)');
+    logRow('Combustible', tipo_combustible); logRow('C%', p.C,'%'); logRow('H%', p.H,'%');
+    logRow('O%', p.O,'%'); logRow('N%', p.N,'%'); logRow('S%', p.S,'%'); logRow('PCI', p.PCI,'kcal/kg');
+    const fC=p.C/PMC, fH=p.H/PMH, fO=p.O/PMO, fN=p.N/PMN, fS=p.S/PMS;
+    logRow('frac_C = C/PMC', fC); logRow('frac_H = H/PMH', fH); logRow('frac_O = O/PMO', fO);
+    logRow('frac_N = N/PMN', fN); logRow('frac_S = S/PMS', fS);
+    const Min = Math.min(...[fC,fH,fO,fN,fS].filter(v=>v>0));
+    logRow('Mínimo de fracciones (Min)', Min);
+    const a=fC/Min, b=fH/Min, c=fO/Min, d=fN/Min, e=fS/Min, PMComb=100/Min;
+    logRow('a (C normalizado)', a); logRow('b (H normalizado)', b); logRow('c (O normalizado)', c);
+    logRow('d (N normalizado)', d); logRow('e (S normalizado)', e); logRow('PMComb', PMComb,'g/mol');
+    if(a<=0) logWarn('a ≤ 0: sin carbono'); if(b<=0) logWarn('b ≤ 0: sin hidrógeno');
+
+    // ── PASO 2: Humedad ────────────────────────────────────
+    sec('PASO 2 – Humedad absoluta del aire');
+    const {I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24,I25,I26,I4H,I5H,I35,I36,I37,I38,I39,I40,I41,I42,I2,I3} = inp;
+    logRow('Temperatura ambiente (I11)', I11,'°C'); logRow('Humedad relativa (I12)', I12,'%');
+    const expH = -9.1359 + 0.8073*Math.log(I12) + I11*Math.exp(-2.992+0.002*I12);
+    logRow('Exponente', expH);
+    const Habs = Math.exp(expH);
+    logRow('Habs (kg H₂O/kg aire seco)', Habs);
+    if(Habs<0||Habs>0.1) logWarn(`Habs=${Habs.toFixed(4)} fuera de rango típico`);
+
+    // ── PASO 3: Pérdidas hollín ────────────────────────────
+    sec('PASO 3 – Pérdidas por hollín / inquemdos (Pt)');
+    logRow('Bacharach I22', I22); logRow('CO I20', I20,'ppm');
+    let Pt;
+    if(I22===-1){
+      Pt = 0.000000000221*Math.pow(I20,3) - 0.00000188*Math.pow(I20,2) + 0.00687*I20 - 0.0534;
+      logRow('Pt (Omitir aproximado, polinomio CO)', Pt,'%');
+    } else if(I22>=0 && I22<PT_IB.length){
+      Pt = PT_IB[Math.floor(I22)];
+      logRow(`Pt desde tabla PT_IB[${Math.floor(I22)}]`, Pt,'%');
+    } else {
+      Pt = 2.52e-9*Math.pow(I20,3) - 3.32e-6*Math.pow(I20,2) + 0.00769*I20;
+      logRow('Pt (fórmula polinómica)', Pt,'%');
+    }
+    if(Pt<0) logWarn('Pt negativo'); if(Pt>15) logWarn('Pt > 15%: pérdidas muy elevadas');
+
+    // ── PASO 4: Bucle conversión ───────────────────────────
+    sec('PASO 4 – Bucle de conversión (iterativo)');
+    logRow('I9 (flujo comb)', I9,'kg/h'); logRow('PCI', p.PCI,'kcal/kg');
+    logRow('Pt', Pt,'%'); logRow('I19 (O₂)', I19,'%'); logRow('I20 (CO)', I20,'ppm');
+    let f=1.0, conv_result;
+    for(let iter=0; iter<10; iter++){
+      const d1=f*a;
+      const b2=0.5-100/(I20/10000);
+      const c2=(1+79/21)*(a+b/4+e);
+      const d2=(79/42)*c-d/2+b/4;
+      const b3=50+I19/2;
+      const c3=((1+79/21)*I19-100)*(a+b/4+e);
+      const d3=(I19/4-25)*b-100*e+((79/42)*c-d/2)*I19;
+      const A=[[1,1,0],[0,b2,c2],[100,b3,c3]], D=[d1,d2,d3];
+      const [x,y,n] = solve3x3(A,D);
+      const mc=p.C*0.01, mco=y*PMCO/PMComb;
+      const f2=1-((Pt*p.PCI/100)-mco*DHCO)/(mc*DHC);
+      const det = logIterBlock(iter+1,[
+        ['f (fracción antes)', f], ['d1=f·a', d1],
+        ['b2', b2],['c2', c2],['d2', d2],
+        ['b3', b3],['c3', c3],['d3', d3],
+        ['→ x (CO₂)', x],['→ y (CO)', y],['→ n (exc. O₂)', n],
+        ['mc', mc],['mco', mco],['→ f2 (nueva)', f2]
+      ]);
+      if(y<0) { det.open=true; logWarn(`Iter ${iter+1}: y<0 (CO negativo)`); }
+      if(x<0) { det.open=true; logWarn(`Iter ${iter+1}: x<0 (CO₂ negativo)`); }
+      if(n<1)  logWarn(`Iter ${iter+1}: n<1 (sub-estequiométrico)`);
+      if(Math.abs(f2-f)<TOL){
+        det.open=true;
+        logOk(`Converge en iteración ${iter+1} — |f2−f| = ${Math.abs(f2-f).toExponential(3)}`);
+        conv_result={f:f2,x,y,n}; break;
+      }
+      f=f2;
+      if(iter===9) throw new Error('No convergió en el bucle de conversión');
+    }
+    const {f:f_conv, x, y, n} = conv_result;
+    sec('Resultados del bucle de conversión','#22c55e');
+    logRow('f (fracción conversión)', f_conv); logRow('x (mol CO₂/mol comb)', x);
+    logRow('y (mol CO /mol comb)', y); logRow('n (coef. exceso O₂)', n);
+    logRow('Exceso de aire', (n-1)*100,'%');
+    if((n-1)*100>50) logWarn('Exceso de aire > 50%: posible pérdida de eficiencia');
+
+    // ── PASO 5: Flujos de aire ─────────────────────────────
+    sec('PASO 5 – Flujos de aire');
+    const FOA=(n*(a+b/4+e)-c/2)*(32/PMComb)*I9;
+    const FNA=(79/21)*(n*(a+b/4+e)-c/2)*(28/PMComb)*I9;
+    const FHA=(Habs/18*(n*(a+b/4+e)-c/2)*(PMO2+(79/21)*PMN2))*(18/PMComb)*I9;
+    const FTA=FOA+FNA+FHA;
+    logRow('FOA (O₂ en aire)', FOA,'kg/h'); logRow('FNA (N₂ en aire)', FNA,'kg/h');
+    logRow('FHA (H₂O en aire)', FHA,'kg/h'); logRow('FTA (total aire)', FTA,'kg/h');
+    if(FOA<0) logWarn('FOA < 0: flujo O₂ negativo');
+
+    // ── PASO 6: Flujos chimenea ────────────────────────────
+    sec('PASO 6 – Flujos en chimenea');
+    const FCO2=x*(44/PMComb)*I9;
+    const FCO =y*(28/PMComb)*I9;
+    const FO2 =(n*(a+b/4+e)-x-y/2-b/4-e)*(32/PMComb)*I9;
+    const FN2 =((79/21)*(n*(a+b/4+e)-c/2)+d/2)*(28/PMComb)*I9;
+    const FH2O=(b/2+Habs/18*(n*(a+b/4+e)-c/2)*(32+79/21*28))*(18/PMComb)*I9;
+    const FSO2=e*(64/PMComb)*I9;
+    const FHollin=(1-f_conv)*a*(12/PMComb)*I9;
+    logRow('FCO₂', FCO2,'kg/h'); logRow('FCO', FCO,'kg/h'); logRow('FO₂ libre', FO2,'kg/h');
+    logRow('FN₂', FN2,'kg/h'); logRow('FH₂O', FH2O,'kg/h'); logRow('FSO₂', FSO2,'kg/h');
+    logRow('FHollín', FHollin,'kg/h');
+    logRow('Suma flujos chimenea', FCO2+FCO+FO2+FN2+FH2O+FSO2+FHollin,'kg/h');
+    if(FCO>5) logWarn(`FCO=${FCO.toFixed(2)} kg/h – CO elevado`);
+    if(FSO2>10) logWarn(`FSO₂=${FSO2.toFixed(2)} kg/h – riesgo corrosión`);
+
+    // ── PASO 7: Pérdidas calor sensible ───────────────────
+    sec('PASO 7 – Pérdidas calor sensible (gases chimenea)');
+    const T1=I21+273, T2=Tr+273, dT=I21-Tr;
+    logRow('T chimenea I21', I21,'°C'); logRow('T1=I21+273', T1,'K'); logRow('dT=I21-Tr', dT,'°C');
+    const nCO2=x, nCO=y, nO2=n*(a+b/4+e)-x-y/2-b/4-e;
+    const nN2=(79/21)*(n*(a+b/4+e)-c/2)+d/2;
+    const nH2O=(b/2)+(Habs/18)*(n*(a+b/4+e)-c/2)*(PMO2+(79/21)*PMN2);
+    const nSO2=e, nC=(1-f_conv)*a;
+    logRow('nCO₂', nCO2); logRow('nCO', nCO); logRow('nO₂', nO2);
+    logRow('nN₂', nN2); logRow('nH₂O', nH2O); logRow('nSO₂', nSO2); logRow('nC', nC);
+    const CPCO2=10.34+0.00137*((T1*T1-T2*T2)/dT)-195500/(T1*T2);
+    const CPCO =6.6 +0.0006 *((T1*T1-T2*T2)/dT);
+    const CPO2 =8.27+0.00129*((T1*T1-T2*T2)/dT)-187700/(T1*T2);
+    const CPN2 =6.5 +0.0005 *((T1*T1-T2*T2)/dT);
+    const CPH2O=8.22+0.000075*((T1*T1-T2*T2)/dT)+44.67e-8*((T1*T1*T1-T2*T2*T2)/dT);
+    const CPSO2=7.7 +0.00265 *((T1*T1-T2*T2)/dT)-27.67e-8*((T1*T1*T1-T2*T2*T2)/dT);
+    const CPC  =2.673+0.0013085*((T1*T1-T2*T2)/(T1-T2))-116900/(T1*T2);
+    logRow('Cp CO₂', CPCO2,'kcal/mol·°C'); logRow('Cp CO', CPCO,'kcal/mol·°C');
+    logRow('Cp O₂', CPO2,'kcal/mol·°C'); logRow('Cp N₂', CPN2,'kcal/mol·°C');
+    logRow('Cp H₂O', CPH2O,'kcal/mol·°C'); logRow('Cp SO₂', CPSO2,'kcal/mol·°C'); logRow('Cp C', CPC,'kcal/mol·°C');
+    const R36=(nCO2*CPCO2+nCO*CPCO+nO2*CPO2+nN2*CPN2+nH2O*CPH2O+nSO2*CPSO2+nC*CPC)*dT*I9/PMComb;
+    logRow('R36 (pérd. calor sensible)', R36,'kcal/h');
+    if(R36<0) logWarn('R36 < 0: verificar T chimenea');
+
+    // ── PASO 8: Inquemados ─────────────────────────────────
+    sec('PASO 8 – Pérdidas por inquemados');
+    const Pig=FCO*DHCO;
+    const Pis=Pt*p.PCI*I9/100-Pig;
+    logRow('FCO', FCO,'kg/h'); logRow('DHCO', DHCO,'kcal/kg');
+    logRow('Pig (gases)', Pig,'kcal/h');
+    logRow('Pt·PCI·I9/100', Pt*p.PCI*I9/100,'kcal/h');
+    logRow('Pis (sólidos)', Pis,'kcal/h');
+    if(Pig<0) logWarn('Pig negativo');
+    if(Pis<0) logWarn('Pis negativo – posible inconsistencia CO vs Pt');
+    const R38=Pig, R37=Pis;
+
+    // ── PASO 9: Pérdidas superficiales ────────────────────
+    sec('PASO 9 – Pérdidas superficiales');
+    let R39=777;
+    if(I4H&&I5H){
+      const Af=(Math.PI/4)*I4H*I4H, Ad=Math.PI*I4H/2*I5H;
+      const Ap=Af, Ai=Ad;
+      const Hc=10.45-I13+10*Math.sqrt(I13);
+      logRow('I4H diámetro', I4H,'m'); logRow('I5H largo', I5H,'m');
+      logRow('Af (área fondo)', Af,'m²'); logRow('Ad (área lateral)', Ad,'m²');
+      logRow('Hc (coef. conv.)', Hc,'W/m²K');
+      const Qcde=Af*Hc*(I23-I11)*3600/4.184/1000;
+      const Qcld=Ad*Hc*(I24-I11)*3600/4.184/1000;
+      const Qcpo=Ap*Hc*(I25-I11)*3600/4.184/1000;
+      const Qcli=Ai*Hc*(I26-I11)*3600/4.184/1000;
+      const Qrde=Af*EMISIVIDAD*SIGMA*(Math.pow(I23+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
+      const Qrld=Ad*EMISIVIDAD*SIGMA*(Math.pow(I24+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
+      const Qrpo=Ap*EMISIVIDAD*SIGMA*(Math.pow(I25+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
+      const Qrli=Ai*EMISIVIDAD*SIGMA*(Math.pow(I26+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
+      logRow('Qcde conv fondo', Qcde,'kcal/h'); logRow('Qcld conv lateral', Qcld,'kcal/h');
+      logRow('Qrde rad fondo', Qrde,'kcal/h'); logRow('Qrld rad lateral', Qrld,'kcal/h');
+      R39=(Qrde+Qcde)+(Qrld+Qcld)+(Qrpo+Qcpo)+(Qrli+Qcli);
+      logRow('R39 (total pérd. sup)', R39,'kcal/h');
+    } else {
+      logRow('R39', '777 (N/A – I4H/I5H no dados)');
+    }
+
+    // ── PASO 10: Calores y balance ─────────────────────────
+    sec('PASO 10 – Calores y balance de energía');
+    const R29=p.PCI*I9;
+    const R30=I9*(p.C1+p.C2*I10)*(I10-Tr);
+    const HLw=(1+I14/10000)*(I14-Tr);
+    const HL_real=(0.00000000000657*Math.pow(I17,5)-0.0000000133*Math.pow(I17,4)
+                  +0.0000103*Math.pow(I17,3)-0.00393*Math.pow(I17,2)+0.928*I17+110);
+    let HV;
+    if(tipo_vapor==='Saturado'){
+      HV=(-0.00000000000000887*Math.pow(I17,6)+0.0000000000208*Math.pow(I17,5)
+          -0.0000000193*Math.pow(I17,4)+0.00000906*Math.pow(I17,3)
+          -0.00236*Math.pow(I17,2)+0.354*I17+643);
+    } else {
+      const T=I18+273;
+      const Cv=(8.22+0.000075*((T*T-273*273)/I18)+44.67e-8*((T*T*T-273*273*273)/I18)+1.987)/18;
+      const Ts=(Math.exp(0.22187*Math.log(I17+14.7)+4.7692)-32)/1.8;
+      const Pn=(I17+14.7)/145.038;
+      const FC=((-0.000000004475*I18*I18+0.000005271*I18-0.002321)*Pn*Pn
+               +(-0.0000000245*I18*I18+0.00002512*I18+0.01171)*Pn
+               +(0.0000000925*I18*I18-0.0001796*I18+1.02));
+      const HVsat=(-0.00000000000000887*Math.pow(I17,6)+0.0000000000208*Math.pow(I17,5)
+                  -0.0000000193*Math.pow(I17,4)+0.00000906*Math.pow(I17,3)
+                  -0.00236*Math.pow(I17,2)+0.354*I17+643);
+      logRow('Ts (Tsat a P)', Ts,'°C'); logRow('Cv', Cv,'kcal/kg·°C'); logRow('FC', FC); logRow('HV_sat', HVsat,'kcal/kg');
+      HV=(HVsat+Cv*(I18-Ts))*FC;
+    }
+    logRow('R29 (calor combustión)', R29,'kcal/h'); logRow('R30 (calor sensible comb)', R30,'kcal/h');
+    logRow('HLw (entalpía agua)', HLw,'kcal/kg'); logRow('HL_real (liq. sat)', HL_real,'kcal/kg');
+    logRow('HV (entalpía vapor)', HV,'kcal/kg');
+
+    const T1a=I11+273, T2a=Tr+273, dTa=I11-Tr;
+    let R31=0;
+    if(dTa!==0){
+      const CPa=0.00636+0.000000845*((T1a*T1a-T2a*T2a)/dTa)-0.000000000092*((T1a*T1a*T1a-T2a*T2a*T2a)/dTa);
+      R31=Habs*(FOA+FNA)*CPa*dTa*AIRE_PESO;
+    }
+    const R32=FHA*(1+I11/10000)*(I11-Tr);
+    logRow('R31 (calor sensible aire)', R31,'kcal/h'); logRow('R32 (calor humedad aire)', R32,'kcal/h');
+
+    const denom=HLw+(I15/(I16-I15))*(HLw-HL_real)-HV;
+    logRow('Denominador balance vapor (denom)', denom,'kcal/kg');
+    if(Math.abs(denom)<1e-6) logWarn('Denominador ≈ 0 – posible div/0 en R19');
+
+    const R19=(R36+R37+R38+(R39!==777?R39:0)-R29-R30-R31-R32)/denom;
+    const R20=(I15/(I16-I15))*R19;
+    const R16=R19+R20;
+    const R33=R16*HLw, R35=R19*HV, R40=R20*HL_real;
+    logRow('R19 (vapor generado)', R19,'kg/h'); logRow('R20 (purga)', R20,'kg/h');
+    logRow('R33 (calor agua alim)', R33,'kcal/h'); logRow('R35 (calor útil vapor)', R35,'kcal/h');
+    logRow('R40 (calor purga)', R40,'kcal/h');
+
+    // ── PASO 11: Cierre de masa ────────────────────────────
+    sec('PASO 11 – Cierre de balance de masa');
+    const R15=I9, R17=FTA, R18=R15+R16+R17;
+    const mass_out=R19+R20+FCO2+FCO+FO2+FN2+FH2O+FSO2+FHollin;
+    const mass_err=R18-mass_out;
+    logRow('R15 (comb)', R15,'kg/h'); logRow('R16 (agua)', R16,'kg/h');
+    logRow('R17 (aire)', R17,'kg/h'); logRow('R18 (total entradas)', R18,'kg/h');
+    logRow('Total salidas (sin ajuste)', mass_out,'kg/h');
+    logRow('Error de cierre', mass_err,'kg/h');
+    const FN2_adj=FN2+(Math.abs(mass_err)<0.5?mass_err:0);
+    if(Math.abs(mass_err)<0.5) logOk(`Cierre de masa ✓ — error=${mass_err.toFixed(4)} kg/h → ajuste en FN₂`);
+    else logWarn(`Error cierre masa = ${mass_err.toFixed(3)} kg/h > 0.5`);
+
+    // ── PASO 12: Cierre de energía ─────────────────────────
+    sec('PASO 12 – Cierre de balance de energía');
+    const R34=R29+R30+R31+R32+R33;
+    const R41=R35+R36+R37+R38+(R39!==777?R39:0)+R40;
+    const ener_err=R34-R41;
+    const ener_pct=Math.abs(ener_err/R34)*100;
+    logRow('R34 (total entradas)', R34,'kcal/h'); logRow('R41 (total salidas)', R41,'kcal/h');
+    logRow('Diferencia', ener_err,'kcal/h'); logRow('Diferencia %', ener_pct,'%');
+    if(ener_pct>5) logWarn(`Cierre energético con ${ener_pct.toFixed(2)}% de error`);
+    else logOk(`Cierre energético ✓ — ${ener_pct.toFixed(2)}%`);
+
+    // ── Temperatura de rocío ácido ─────────────────────────
+    sec('PASO 13 – Temperatura de rocío ácido (R50)');
+    const nh2o_c=b/2, nh2o_a=(Habs/18)*(n*(a+b/4+e)-c/2)*(PMO2+(79/21)*PMN2);
+    const nh2o_t=nh2o_c+nh2o_a;
+    const ntot=x+y+(n*(a+b/4+e)-x-y/2-b/4-e)+((79/21)*(n*(a+b/4+e)-c/2)+d/2)+nh2o_t+e+(1-f_conv)*a;
+    logRow('n_H₂O comb', nh2o_c); logRow('n_H₂O aire', nh2o_a); logRow('n_total moles', ntot);
+    let R50=777;
+    if(e>0&&nh2o_t>0&&ntot>0){
+      const rH2O=nh2o_t/ntot, rSO3=e/ntot;
+      R50=203.25+27.6*Math.log10(rH2O)+10.83*Math.log10(rSO3)+1.06*Math.pow(Math.log10(rSO3+8),2.19);
+      logRow('Ratio H₂O/total', rH2O); logRow('Ratio SO₃/total', rSO3);
+      logRow('R50 (T rocío ácido)', R50,'°C');
+      if(R50>I21) logWarn(`T rocío ácido (${R50.toFixed(1)}°C) > T chimenea (${I21}°C) – riesgo corrosión`);
+    } else {
+      logRow('R50', '777 (N/A)');
+    }
+
+    // ── Costos e indicadores ───────────────────────────────
+    // ── PASO 14: Temperatura de llama (R3) – Newton-Raphson
+    sec('PASO 14 – Temperatura de llama (R3) – Newton-Raphson');
+    const QN = R29 + R30 + R31 + R32 - R37 - R38 - (R39!==777?R39:0);
+    logRow('QN = R29+R30+R31+R32−R37−R38−R39', QN, 'kcal/h');
+
+    const nCO2_f = x, nCO_f = y;
+    const nO2_f  = n*(a+b/4+e) - x - y/2 - b/4 - e;
+    const nN2_f  = (79/21)*(n*(a+b/4+e)-c/2) + d/2;
+    const nH2O_f = b/2 + (Habs/18)*(n*(a+b/4+e)-c/2)*(PMO2+(79/21)*PMN2);
+    const nSO2_f = e, nC_f = (1-f_conv)*a;
+
+    const mult_l = I9/PMComb;
+    const LLAMA_CP = [
+      { k:nCO_f *mult_l, a:0,        b:0,         c:0.0006,    d:6.9276, nom:'CO'  },
+      { k:nO2_f *mult_l, a:1.0907e-10,b:-6.6591e-7,c:0.0027599, d:7.5181, nom:'O2'  },
+      { k:nN2_f *mult_l, a:0,         b:1.36e-20,  c:0.0005,    d:6.773,  nom:'N2'  },
+      { k:nH2O_f*mult_l, a:0,         b:4.467e-7,  c:0.0004408, d:8.361,  nom:'H2O' },
+      { k:nSO2_f*mult_l, a:0,         b:-2.767e-7, c:0.002423,  d:9.085,  nom:'SO2' },
+      { k:nC_f  *mult_l, a:6.7928e-11,b:-4.1473e-7,c:0.002224,  d:2.4805, nom:'C'   },
+      { k:nCO2_f*mult_l, a:1.136e-10, b:-6.936e-7, c:0.002901,  d:9.571,  nom:'CO2' },
+    ];
+    LLAMA_CP.forEach(c => logRow(`k${c.nom}`, c.k));
+
+    const cp_fn = (c,T) => c.a*T*T*T + c.b*T*T + c.c*T + c.d;
+    const h_fn  = (c,T) => c.a/4*T*T*T*T + c.b/3*T*T*T + c.c/2*T*T + c.d*T;
+    const FT_fn  = T => QN - LLAMA_CP.reduce((s,c)=>s+c.k*h_fn(c,T),0);
+    const FpT_fn = T =>    - LLAMA_CP.reduce((s,c)=>s+c.k*cp_fn(c,T),0);
+
+    let T_llama = 1000;
+    const regT = [T_llama];
+    logRow('T1 (estimación inicial)', T_llama, '°C');
+    for(let i=1; i<=20; i++){
+      const ft=FT_fn(T_llama), fpt=FpT_fn(T_llama);
+      if(Math.abs(fpt)<1e-9){ logWarn("F'(T)≈0, deteniendo"); break; }
+      const T_new = T_llama - ft/fpt;
+      const dT = Math.abs(T_new - T_llama);
+      logIterBlock(i, [
+        ['T entrada',  T_llama, '°C'],
+        ['F(T)',        ft,      'kcal/h'],
+        ["F'(T)",       fpt,     'kcal/h·°C'],
+        ['T_nueva',    T_new,   '°C'],
+        ['|ΔT|',        dT,      '°C'],
+      ]);
+      regT.push(T_new);
+      if(dT < 0.5){
+        T_llama = T_new;
+        logOk(`Convergencia en ${i} iteraciones  |ΔT|=${dT.toFixed(4)} °C`);
+        break;
+      }
+      T_llama = T_new;
+    }
+    const R3 = Math.round(T_llama*10)/10;
+    logRow('R3 – Temperatura de llama', R3, '°C');
+    logRow('Registro iteraciones T', regT.map(t=>t.toFixed(1)).join(' → '));
+
+    // ── Costos e indicadores (continuación) ───────────────
+    const r8=100-(I37+I38+I39+I40+I41+I42);
+    const r7=(R19*r8!==0)?(0.397*I35*R29)/(R19*r8):777;
+    const R1B=(n-1)*100;
+    const R1C=R17!==0&&R15!==0?R17/R15:777;
+    const R2B=Pt;
+    const R2C=R29!==0?(R38/R29)*100:777;
+    const _dH=HV-HLw; const R5_val=_dH>0?539/_dH:777;
+    const R4_val=(I2&&I2!==0&&R5_val!==777)?(R19/(I2*R5_val))*100:777;
+    const R6A_val=R19!==0?R29/R19:777;
+    const R6B_val=(I3&&I3!==0)?R19/(I3*0.092903):777;
+    const ratios={
+      r42:(FCO2/R29)*1e6, r43:(FCO/R29)*1e6,
+      r44:(FHollin/R29)*1e6, r45:(FSO2/R29)*1e6,
+      r46:(FCO2*I36)/1000, r47:(FCO*I36)/1000,
+      r48:(FHollin*I36)/1000, r49:(FSO2*I36)/1000
+    };
+
+    // Resumen final de warnings
+    sec('RESUMEN DE ADVERTENCIAS','#f59e0b');
+    if(warnings.length===0) logOk('Sin advertencias – cálculo sin anomalías detectadas');
+
+    // ══ RELLENAR TABS ════════════════════════════════════════
+
+    // BMS
+    const rd = v => Math.round(v*100)/100;
+    const R28=R19+R20+FCO2+FCO+FO2+FN2_adj+FH2O+FSO2+FHollin;
+    document.getElementById('bms-placeholder').style.display='none';
+    document.getElementById('bms-output').style.display='block';
+    document.getElementById('bms-output').innerHTML = `
+      <div class="results-grid">
+        ${makeCard('Entradas [kg/h]',[
+          ['R15 – Combustible', rd(R15),'kg/h'],
+          ['R16 – Agua (vapor + purga)', rd(R16),'kg/h'],
+          ['R17 – Aire total', rd(R17),'kg/h'],
+          ['R18 – TOTAL ENTRADAS', rd(R18),'kg/h'],
+        ])}
+        ${makeCard('Salidas [kg/h]',[
+          ['R19 – Vapor generado', rd(R19),'kg/h'],
+          ['R20 – Purga', rd(R20),'kg/h'],
+          ['R21 – CO₂  chimenea', rd(FCO2),'kg/h'],
+          ['R22 – CO   chimenea', rd(FCO),'kg/h'],
+          ['R23 – O₂   chimenea', rd(FO2),'kg/h'],
+          ['R24 – N₂   chimenea', rd(FN2_adj),'kg/h'],
+          ['R25 – H₂O  chimenea', rd(FH2O),'kg/h'],
+          ['R26 – SO₂  chimenea', rd(FSO2),'kg/h'],
+          ['R27 – Hollín', rd(FHollin),'kg/h'],
+          ['R28 – TOTAL SALIDAS', rd(R28),'kg/h'],
+        ])}
+        ${makeCard('Verificación cierre',[
+          ['Error (R18 − R28)', rd(R18-R28),'kg/h'],
+          ['Error %', rd(Math.abs((R18-R28)/R18)*100),'%'],
+        ])}
+      </div>`;
+
+    // BEN
+    document.getElementById('ben-placeholder').style.display='none';
+    document.getElementById('ben-output').style.display='block';
+    document.getElementById('ben-output').innerHTML = `
+      <div class="results-grid">
+        ${makeCard('Entradas [kcal/h]',[
+          ['R29 – Calor combustión', rd(R29),'kcal/h'],
+          ['R30 – Calor sensible comb', rd(R30),'kcal/h'],
+          ['R31 – Calor sens. aire seco', rd(R31),'kcal/h'],
+          ['R32 – Calor humedad aire', rd(R32),'kcal/h'],
+          ['R33 – Calor agua alim.', rd(R33),'kcal/h'],
+          ['R34 – TOTAL ENTRADAS', rd(R34),'kcal/h'],
+        ])}
+        ${makeCard('Salidas [kcal/h]',[
+          ['R35 – Calor útil (vapor)', rd(R35),'kcal/h'],
+          ['R36 – Pérd. calor sensible', rd(R36),'kcal/h'],
+          ['R37 – Pérd. inquem. sólidos', rd(R37),'kcal/h'],
+          ['R38 – Pérd. inquem. gaseosos', rd(R38),'kcal/h'],
+          ['R39 – Pérd. superficiales', R39!==777?rd(R39):'N/A','kcal/h'],
+          ['R40 – Calor purga', rd(R40),'kcal/h'],
+          ['R41 – TOTAL SALIDAS', rd(R41),'kcal/h'],
+        ])}
+        ${makeCard('Verificación cierre',[
+          ['Diferencia (R34 − R41)', rd(ener_err),'kcal/h'],
+          ['Error %', rd(ener_pct),'%'],
+        ])}
+      </div>`;
+
+    // COM / EFI / EMI
+    document.getElementById('com-placeholder').style.display='none';
+    document.getElementById('com-output').style.display='block';
+    document.getElementById('com-output').innerHTML = `
+      <div class="results-grid">
+        ${makeCard('COM – Combustión',[
+          ['R1A – Calidad hollín', badge(Pt)],
+          ['R1B – Exceso de aire', rd(R1B),'%'],
+          ['R1C – Ratio aire/comb', rd(R1C)],
+          ['R2A – Grado de conversión', rd(100 - Pt),'%'],
+          ['R3  – Temperatura de llama', R3,'°C'],
+          ['R2B – % Inquem. sólidos', rd(R2B),'%'],
+          ['R2C – % Inquem. gaseosos', rd(R2C),'%'],
+          ['Pt (pérdidas hollín)', Pt,'%'],
+          ['Habs (humedad abs.)', Habs.toFixed(6),'kg/kg'],
+        ])}
+        ${makeCard('PRO / EFI – Producción y eficiencia',[
+          ['R19 – Vapor generado', rd(R19),'kg/h'],
+          ['R20 – Purga', rd(R20),'kg/h'],
+          ['R4  – Factor de carga', R4_val!==777?rd(R4_val):'N/A','%'],
+          ['R5  – Factor de evaporación', rd(R5_val)],
+          ['R6A – Calor comb/vapor', R6A_val!==777?rd(R6A_val):'N/A','kcal/kg'],
+          ['R6B – Vapor/superficie', R6B_val!==777?rd(R6B_val):'N/A','kg/h/m²'],
+          ['R7 – Costo vapor', r7!==777?rd(r7):'N/A','US$/ton'],
+          ['R8 – % comb. en costos', rd(r8),'%'],
+          ['R9 = R35−R33', rd(R35-R33),'kcal/h'],
+          ['R10 = R36−R30−R31−R32', rd(R36-R30-R31-R32),'kcal/h'],
+          ['R11 = R37+R38', rd(R37+R38),'kcal/h'],
+          ['R12 = R39', R39!==777?rd(R39):'N/A','kcal/h'],
+          ['R13 = R40', rd(R40),'kcal/h'],
+          ['R14 = R29', rd(R29),'kcal/h'],
+        ])}
+        ${makeCard('EMI – Emisiones [mg/kcal]',[
+          ['R42 – Ratio CO₂', rd(ratios.r42),'mg/kcal'],
+          ['R43 – Ratio CO', rd(ratios.r43),'mg/kcal'],
+          ['R44 – Ratio Hollín', rd(ratios.r44),'mg/kcal'],
+          ['R45 – Ratio SO₂', rd(ratios.r45),'mg/kcal'],
+          ['R46 – CO₂ anual', rd(ratios.r46),'t/año (ref.)'],
+          ['R47 – CO anual', rd(ratios.r47),'t/año (ref.)'],
+          ['R48 – Hollín anual', rd(ratios.r48),'t/año (ref.)'],
+          ['R49 – SO₂ anual', rd(ratios.r49),'t/año (ref.)'],
+          ['R50 – T rocío ácido', R50!==777?rd(R50):'N/A','°C'],
+        ])}
+      </div>`;
+
+  } catch(err){
+    logErr(err.message);
+  }
+}
+
+// ── UTILIDADES ─────────────────────────────────────────────
+function clearAll(){
+  const lo = document.getElementById('log-output');
+  lo.innerHTML=''; lo.style.display='none';
+  document.getElementById('log-placeholder').style.display='block';
+  ['bms','ben','com'].forEach(k=>{
+    document.getElementById(k+'-output').style.display='none';
+    document.getElementById(k+'-output').innerHTML='';
+    document.getElementById(k+'-placeholder').style.display='block';
+  });
+  switchTabByName('log');
+}
+
+function switchTab(btn, tabName){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+tabName).classList.add('active');
+}
+function switchTabByName(name){
+  const btn = document.querySelector(`[data-tab="${name}"]`);
+  if(btn) btn.click();
+}
+</script>
+</body>
+</html>
