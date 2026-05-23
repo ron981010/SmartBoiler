@@ -16,7 +16,7 @@
 //  ▼▼▼  INPUTS CONFIGURABLES – edita estos valores  ▼▼▼
 // ============================================================
 
-const TIPO_COMBUSTIBLE = 'Gas Natural (Camisea)';
+const TIPO_COMBUSTIBLE = 'Diesel';
 // Opciones: 'Gas Natural (Camisea)' | 'Gas Natural (Talara)' |
 //           'GLP' | 'Diesel' | 'P.I. 6' | 'P.I. 500'
 
@@ -24,20 +24,20 @@ const TIPO_VAPOR = 'Saturado';
 // Opciones: 'Saturado' | 'Sobrecalentado'
 
 const INPUTS = {
-  I9:  100,     // Flujo de combustible      [kg/h]
+  I9:  1739.3,  // Flujo de combustible      [kg/h]
   I10: 25,      // Temperatura combustible   [°C]
-  I11: 25,      // Temperatura ambiente      [°C]
-  I12: 60,      // Humedad relativa          [%]
+  I11: 30,      // Temperatura ambiente      [°C]
+  I12: 50,      // Humedad relativa          [%]
   I13: 1,       // Velocidad del viento      [m/s]
   I14: 80,      // Temperatura agua entrada  [°C]
   I15: 200,     // Flujo purga               [kg/h]
   I16: 2200,    // Flujo total agua          [kg/h]
-  I17: 100,     // Presión vapor             [PSI]
+  I17: 200,     // Presión vapor             [PSI]
   I18: 200,     // Temperatura vapor (sobrecalentado) [°C]
-  I19: 3,       // O₂ en gases chimenea      [%]
-  I20: 150,     // CO en gases chimenea      [ppm]
-  I21: 200,     // Temperatura gases chimenea [°C]
-  I22: 1,       // Opacidad / número Bacharach [0-9]
+  I19: 7,       // O₂ en gases chimenea      [%]
+  I20: 350,     // CO en gases chimenea      [ppm]
+  I21: 262.8,   // Temperatura gases chimenea [°C]
+  I22: 3,       // Opacidad / número Bacharach [0-9]
   I23: 60,      // Temperatura sup. fondo    [°C]
   I24: 65,      // Temperatura sup. lateral  [°C]
   I25: 62,      // Temperatura sup. posterior[°C]
@@ -158,7 +158,9 @@ function audit_balance_materia(tipo) {
   log('frac_N = N/PMN', frac_N);
   log('frac_S = S/PMS', frac_S);
 
-  const vals = [frac_C, frac_H, frac_O, frac_N, frac_S].filter(v => v > 0);
+  // Excluir fracciones molares negligibles (< 1e-3) para evitar que trazas de S u O
+  // con masa% ≈ 0.0001 se conviertan en el mínimo y disparen PMComb a millones.
+  const vals = [frac_C, frac_H, frac_O, frac_N, frac_S].filter(v => v > 1e-3);
   const Min = Math.min(...vals);
   log('Mínimo de fracciones (Min)', Min);
 
@@ -292,7 +294,10 @@ function audit_flujos_chimenea(a, b, c, d, e, PMComb, I9, n, y, x, Habs, f1) {
   const FCO     = y * (28 / PMComb) * I9;
   const FO2     = (n * (a + b / 4.0 + e) - x - y / 2.0 - b / 4.0 - e) * (32 / PMComb) * I9;
   const FN2     = ((79.0 / 21.0) * (n * (a + b / 4.0 + e) - c / 2.0) + d / 2.0) * (28 / PMComb) * I9;
-  const FH2O    = (b / 2.0 + Habs / 18.0 * (n * (a + b / 4.0 + e) - c / 2.0) * (32 + 79.0 / 21.0 * 28)) * (18 / PMComb) * I9;
+  // R25 (FH₂O) = F147 (H₂O combustión del H₂) + F148 (H₂O del aire húmedo)
+  const F147    = (b / 2.0) * (18 / PMComb) * I9;
+  const F148    = (Habs / 18.0 * (n * (a + b / 4.0 + e) - c / 2.0) * (32 + 79.0 / 21.0 * 28)) * (18 / PMComb) * I9;
+  const FH2O    = F147 + F148;
   const FSO2    = e * (64 / PMComb) * I9;
   const FHollin = (1 - f1) * a * (12 / PMComb) * I9;
 
@@ -300,7 +305,9 @@ function audit_flujos_chimenea(a, b, c, d, e, PMComb, I9, n, y, x, Habs, f1) {
   log('FCO   (flujo CO)', FCO, 'kg/h');
   log('FO₂   (flujo O₂ libre)', FO2, 'kg/h');
   log('FN₂   (flujo N₂)', FN2, 'kg/h');
-  log('FH₂O  (flujo vapor de agua)', FH2O, 'kg/h');
+  log('F147  (H₂O combustión H₂ – parte 1 de R25)', F147, 'kg/h');
+  log('F148  (H₂O aire húmedo  – parte 2 de R25)', F148, 'kg/h');
+  log('FH₂O  (R25 = F147+F148)', FH2O, 'kg/h');
   log('FSO₂  (flujo SO₂)', FSO2, 'kg/h');
   log('FHollín', FHollin, 'kg/h');
 
@@ -311,7 +318,7 @@ function audit_flujos_chimenea(a, b, c, d, e, PMComb, I9, n, y, x, Habs, f1) {
   if (FSO2 > 5)  warn(`FSO₂ = ${FSO2.toFixed(3)} kg/h – riesgo de corrosión ácida`);
   if (FO2  < 0)  warn('FO₂ < 0: exceso de O₂ negativo');
 
-  return { FCO2, FCO, FO2, FN2, FH2O, FSO2, FHollin };
+  return { FCO2, FCO, FO2, FN2, FH2O, F147, F148, FSO2, FHollin };
 }
 
 function audit_perdidas_calor_sensible(x, y, a, b, c, d, e, f1, n, PMComb, Habs, I9, I21) {
@@ -581,50 +588,58 @@ try {
   seccion('PASO 12 – Temperatura de llama (R3) – Newton-Raphson');
 
   const QN = R29 + R30 + R31 + R32 - R37 - R38 - (R39 !== 777 ? R39 : 0);
-  log('QN = R29+R30+R31+R32−R37−R38−R39', QN, 'kcal/h');
+  log('QN = R29+R30+R31+R32−R37−R38−R39  (Excel B276)', QN, 'kcal/h');
 
-  // I. Calcular T – Newton-Raphson para temperatura de llama
-  // Coeficientes de entalpía H(T) = a·T⁴ + b·T³ + c·T² + d·T  (T en °C)
-  // Obtenidos integrando Cp(T): a_H = a_Cp/4, b_H = b_Cp/3, c_H = c_Cp/2, d_H = d_Cp
+  // F(T) = B276 − SUM(B297:B303)   donde cada B_i = (F_i÷C_i) × (a·T³+b·T²+c·T+d) × T
+  // Ki = (R_i/PM_i) · H_i(T)   donde H_i(T) = (a·T³ + b·T² + c·T + d)·T  (= Cp_i(T)·T)
+  // F147 y F148 vienen de PASO 6 (descomposición de R25)
+  log('F147 (H₂O combustión, de PASO 6)', chim.F147, 'kg/h');
+  log('F148 (H₂O aire húmedo, de PASO 6)', chim.F148, 'kg/h');
+
+  // Orden idéntico al Excel: B297→CO₂, B298→CO, B299→O₂, B300→N₂, B301→H₂O, B302→SO₂, B303→C
   const COEF_H = [
-    { R: chim.FCO,     PM: PMCO,   a: 0,            b: 0,            c: 0.0003,    d: 6.9276, nom: 'KCO'  },
-    { R: chim.FO2,     PM: PMO2,   a: 2.72675e-11,  b:-2.2197e-7,    c: 0.001380,  d: 7.5181, nom: 'KO2'  },
-    { R: chim.FN2,     PM: PMN2,   a: 0,            b: 0,            c: 0.00025,   d: 6.773,  nom: 'KN2'  },
-    { R: chim.FH2O,    PM: PMH2O,  a: 0,            b: 1.489e-7,     c: 0.0002204, d: 8.361,  nom: 'KH2O' },
-    { R: chim.FSO2,    PM: PMSO2,  a: 0,            b:-9.2233e-8,    c: 0.0012115, d: 9.085,  nom: 'KSO2' },
-    { R: chim.FHollin, PM: PMC,    a: 1.6982e-11,   b:-1.38243e-7,   c: 0.001112,  d: 2.4805, nom: 'KC'   },
-    { R: chim.FCO2,    PM: PMCO2,  a: 2.84e-11,     b:-2.312e-7,     c: 0.0014505, d: 9.571,  nom: 'KCO2' },
+    { R: chim.FCO2,             PM: PMCO2,  a: 1.136e-10,    b:-6.936e-7,    c: 0.002901,  d: 9.571,  nom: 'KCO2' },  // B297  Excel F143÷C96
+    { R: chim.FCO,              PM: PMCO,   a: 0,            b: 0,           c: 0.0006,    d: 6.9276, nom: 'KCO'  },  // B298  Excel F144÷C97
+    { R: chim.FO2,              PM: PMO2,   a: 1.0907e-10,   b:-6.6591e-7,   c: 0.002760,  d: 7.5181, nom: 'KO2'  },  // B299  Excel F145÷C99
+    { R: chim.FN2,              PM: PMN2,   a: 0,            b: 0,           c: 0.0005,    d: 6.773,  nom: 'KN2'  },  // B300  Excel F146÷C98
+    { R: chim.F147 + chim.F148, PM: PMH2O,  a: 0,            b: 4.467e-7,    c: 0.0004408, d: 8.361,  nom: 'KH2O' },  // B301  Excel (F147+F148)÷C101
+    { R: chim.FSO2,             PM: PMSO2,  a: 0,            b:-2.767e-7,    c: 0.002423,  d: 9.085,  nom: 'KSO2' },  // B302  Excel F149÷C100
+    { R: chim.FHollin,          PM: PMC,    a: 6.7928e-11,   b:-4.14729e-7,  c: 0.002224,  d: 2.4805, nom: 'KC'   },  // B303  Excel F150÷C102
   ];
 
   // Mostrar R_i/PM_i (caudal molar de cada componente)
   COEF_H.forEach(g => log(`  ${g.nom}: R/PM`, rd(g.R / g.PM), 'kmol/h'));
 
-  // F(T)  = QN − Σ Ki     con Ki  = (R_i/PM_i)·(a·T⁴ + b·T³ + c·T² + d·T)
-  // F'(T) =    − Σ Ki'    con Ki' = (R_i/PM_i)·(4a·T³ + 3b·T² + 2c·T + d)
+  // F(T) = B276 − SUM(B297:B303)
   const FT_llama  = T => QN - COEF_H.reduce((s, g) =>
     s + (g.R / g.PM) * (g.a*T*T*T*T + g.b*T*T*T + g.c*T*T + g.d*T), 0);
   const FpT_llama = T =>    - COEF_H.reduce((s, g) =>
     s + (g.R / g.PM) * (4*g.a*T*T*T  + 3*g.b*T*T  + 2*g.c*T  + g.d), 0);
 
-  let T1 = 1000; // °C – estimación inicial
-  log('T1 (estimación inicial)', T1, '°C');
+  // Bucle Newton-Raphson:
+  //   B278 = T_actual  (empieza en 1000, se actualiza a T2 cada vuelta)
+  //   B314 = F(T)  = B276 − SUM(B297:B303)  [QN − ΣKi]
+  //   B315 = F'(T) = −SUM(kCO2′+kCO′+kO2′+kN2′+kH2O′+kSO2′+kC′)
+  //   T2   = B278 − B314/B315
+  let T1 = 1000; // B278 inicial = 1000 °C
+  log('T1 / B278 (estimación inicial)', T1, '°C');
   const regT = [T1];
   for (let i = 1; i <= 50; i++) {
-    const ft  = FT_llama(T1);
-    const fpt = FpT_llama(T1);
-    console.log(`    iter ${i}: T=${T1.toFixed(2)}  F(T)=${ft.toFixed(2)}  F'(T)=${fpt.toFixed(2)}`);
+    const ft  = FT_llama(T1);   // B314 = F(T)  = B276 − SUM(B297:B303)
+    const fpt = FpT_llama(T1);  // B315 = F'(T) = −SUM(ki′)
+    console.log(`    iter ${i}: B278=${T1.toFixed(2)}  B314=F(T)=${ft.toFixed(2)}  B315=F'(T)=${fpt.toFixed(2)}`);
     if (Math.abs(fpt) < 1e-9) { warn("F'(T)≈0, deteniendo iteración"); break; }
-    const T2 = T1 - ft / fpt;
+    const T2 = T1 - ft / fpt;   // T2 = B278 − B314/B315
     regT.push(T2);
-    // II. Condicional: |T1−T2| < 0.2 → converge; si no, continúa con T1 = T2
+    // Condicional: |B278−T2| < 0.2 → converge; si no, B278 = T2 y siguiente iteración
     if (Math.abs(T1 - T2) < 0.2) {
-      T1 = T2;
+      T1 = T2;  // B278 ← T2
       const ft_f = FT_llama(T1), fpt_f = FpT_llama(T1);
-      console.log(`    iter ${i+1}: T=${T1.toFixed(2)}  F(T)=${ft_f.toFixed(2)}  F'(T)=${fpt_f.toFixed(2)}`);
+      console.log(`    iter ${i+1}: B278=${T1.toFixed(2)}  B314=F(T)=${ft_f.toFixed(2)}  B315=F'(T)=${fpt_f.toFixed(2)}`);
       console.log(`    ✓ Convergencia en ${i} iteraciones  |ΔT|=${Math.abs(T2 - regT[regT.length-2]).toFixed(4)} °C`);
       break;
     }
-    T1 = T2;
+    T1 = T2;  // B278 ← T2
   }
   const R3 = Math.round(T1 * 10) / 10;
   log('R3 – Temperatura de llama', R3, '°C');

@@ -472,12 +472,18 @@ function runAudit(){
     const FCO =y*(28/PMComb)*I9;
     const FO2 =(n*(a+b/4+e)-x-y/2-b/4-e)*(32/PMComb)*I9;
     const FN2 =((79/21)*(n*(a+b/4+e)-c/2)+d/2)*(28/PMComb)*I9;
-    const FH2O=(b/2+Habs/18*(n*(a+b/4+e)-c/2)*(32+79/21*28))*(18/PMComb)*I9;
+    // R25 (FH₂O) = F147 (H₂O combustión del H₂) + F148 (H₂O del aire húmedo)
+    const F147=(b/2)*(18/PMComb)*I9;
+    const F148=(Habs/18*(n*(a+b/4+e)-c/2)*(32+79/21*28))*(18/PMComb)*I9;
+    const FH2O=F147+F148;
     const FSO2=e*(64/PMComb)*I9;
     const FHollin=(1-f_conv)*a*(12/PMComb)*I9;
     logRow('FCO₂', FCO2,'kg/h'); logRow('FCO', FCO,'kg/h'); logRow('FO₂ libre', FO2,'kg/h');
-    logRow('FN₂', FN2,'kg/h'); logRow('FH₂O', FH2O,'kg/h'); logRow('FSO₂', FSO2,'kg/h');
-    logRow('FHollín', FHollin,'kg/h');
+    logRow('FN₂', FN2,'kg/h');
+    logRow('F147 (H₂O combustión H₂ – parte 1 de R25)', F147,'kg/h');
+    logRow('F148 (H₂O aire húmedo  – parte 2 de R25)', F148,'kg/h');
+    logRow('FH₂O (R25 = F147+F148)', FH2O,'kg/h');
+    logRow('FSO₂', FSO2,'kg/h'); logRow('FHollín', FHollin,'kg/h');
     logRow('Suma flujos chimenea', FCO2+FCO+FO2+FN2+FH2O+FSO2+FHollin,'kg/h');
     if(FCO>5) logWarn(`FCO=${FCO.toFixed(2)} kg/h – CO elevado`);
     if(FSO2>10) logWarn(`FSO₂=${FSO2.toFixed(2)} kg/h – riesgo corrosión`);
@@ -640,53 +646,61 @@ function runAudit(){
     // ── PASO 14: Temperatura de llama (R3) – Newton-Raphson
     sec('PASO 14 – Temperatura de llama (R3) – Newton-Raphson');
     const QN = R29 + R30 + R31 + R32 - R37 - R38 - (R39!==777?R39:0);
-    logRow('QN = R29+R30+R31+R32−R37−R38−R39', QN, 'kcal/h');
+    logRow('QN = R29+R30+R31+R32−R37−R38−R39  (Excel B276)', QN, 'kcal/h');
 
-    const nCO2_f = x, nCO_f = y;
-    const nO2_f  = n*(a+b/4+e) - x - y/2 - b/4 - e;
-    const nN2_f  = (79/21)*(n*(a+b/4+e)-c/2) + d/2;
-    const nH2O_f = b/2 + (Habs/18)*(n*(a+b/4+e)-c/2)*(PMO2+(79/21)*PMN2);
-    const nSO2_f = e, nC_f = (1-f_conv)*a;
-
-    const mult_l = I9/PMComb;
+    // F(T) = B276 − SUM(B297:B303)   donde cada B_i = (F_i÷C_i) × (a·T³+b·T²+c·T+d) × T
+    // Ki = (R_i/PM_i) · H_i(T)   donde H_i(T) = (a·T³ + b·T² + c·T + d)·T  (= Cp_i(T)·T)
+    // F147 y F148 vienen de PASO 6
+    logRow('F147 (H₂O combustión, de PASO 6)', F147, 'kg/h');
+    logRow('F148 (H₂O aire húmedo,  de PASO 6)', F148, 'kg/h');
+    // Orden idéntico al Excel: B297→CO₂, B298→CO, B299→O₂, B300→N₂, B301→H₂O, B302→SO₂, B303→C
     const LLAMA_CP = [
-      { k:nCO_f *mult_l, a:0,        b:0,         c:0.0006,    d:6.9276, nom:'CO'  },
-      { k:nO2_f *mult_l, a:1.0907e-10,b:-6.6591e-7,c:0.0027599, d:7.5181, nom:'O2'  },
-      { k:nN2_f *mult_l, a:0,         b:1.36e-20,  c:0.0005,    d:6.773,  nom:'N2'  },
-      { k:nH2O_f*mult_l, a:0,         b:4.467e-7,  c:0.0004408, d:8.361,  nom:'H2O' },
-      { k:nSO2_f*mult_l, a:0,         b:-2.767e-7, c:0.002423,  d:9.085,  nom:'SO2' },
-      { k:nC_f  *mult_l, a:6.7928e-11,b:-4.1473e-7,c:0.002224,  d:2.4805, nom:'C'   },
-      { k:nCO2_f*mult_l, a:1.136e-10, b:-6.936e-7, c:0.002901,  d:9.571,  nom:'CO2' },
+      { k:FCO2       /PMCO2, a:1.136e-10,   b:-6.936e-7,   c:0.002901,   d:9.571,  nom:'CO2' },  // B297  Excel F143÷C96
+      { k:FCO        /PMCO,  a:0,           b:0,           c:0.0006,     d:6.9276, nom:'CO'  },  // B298  Excel F144÷C97
+      { k:FO2        /PMO2,  a:1.0907e-10,  b:-6.6591e-7,  c:0.002760,   d:7.5181, nom:'O2'  },  // B299  Excel F145÷C99
+      { k:FN2        /PMN2,  a:0,           b:0,           c:0.0005,     d:6.773,  nom:'N2'  },  // B300  Excel F146÷C98
+      { k:(F147+F148)/18,    a:0,           b:4.467e-7,    c:0.0004408,  d:8.361,  nom:'H2O' },  // B301  Excel (F147+F148)÷C101
+      { k:FSO2       /PMSO2, a:0,           b:-2.767e-7,   c:0.002423,   d:9.085,  nom:'SO2' },  // B302  Excel F149÷C100
+      { k:FHollin    /PMC,   a:6.7928e-11,  b:-4.14729e-7, c:0.002224,   d:2.4805, nom:'C'   },  // B303  Excel F150÷C102
     ];
-    LLAMA_CP.forEach(c => logRow(`k${c.nom}`, c.k));
+    LLAMA_CP.forEach(c => logRow(`k${c.nom} = R/PM`, c.k, 'kmol/h'));
 
-    const cp_fn = (c,T) => c.a*T*T*T + c.b*T*T + c.c*T + c.d;
-    const h_fn  = (c,T) => c.a/4*T*T*T*T + c.b/3*T*T*T + c.c/2*T*T + c.d*T;
-    const FT_fn  = T => QN - LLAMA_CP.reduce((s,c)=>s+c.k*h_fn(c,T),0);
-    const FpT_fn = T =>    - LLAMA_CP.reduce((s,c)=>s+c.k*cp_fn(c,T),0);
+    // H(T)  = (a·T³ + b·T² + c·T + d)·T  = Cp(T)·T
+    // H′(T) = 4a·T³ + 3b·T² + 2c·T + d    (derivada, para F′(T))
+    const h_fn  = (c,T) => c.a*T*T*T*T + c.b*T*T*T + c.c*T*T + c.d*T;
+    const cp_fn = (c,T) => 4*c.a*T*T*T + 3*c.b*T*T + 2*c.c*T + c.d;
+    // B314 = F(T)  = B276 − SUM(B297:B303)  [QN − ΣKi]
+    // B315 = F′(T) = −SUM(kCO2′+kCO′+kO2′+kN2′+kH2O′+kSO2′+kC′)
+    const FT_fn  = T => QN - LLAMA_CP.reduce((s,c)=>s+c.k*h_fn(c,T),0);  // B314
+    const FpT_fn = T =>    - LLAMA_CP.reduce((s,c)=>s+c.k*cp_fn(c,T),0); // B315
 
-    let T_llama = 1000;
+    // Bucle NR: T2 = B278 − B314/B315
+    // B278 empieza en 1000 y se actualiza a T2 cada iteración
+    let T_llama = 1000;  // B278 inicial
     const regT = [T_llama];
-    logRow('T1 (estimación inicial)', T_llama, '°C');
+    logRow('T1 / B278 (estimación inicial)', T_llama, '°C');
     for(let i=1; i<=20; i++){
-      const ft=FT_fn(T_llama), fpt=FpT_fn(T_llama);
+      const ft=FT_fn(T_llama);   // B314 = F(T)
+      const fpt=FpT_fn(T_llama); // B315 = F′(T)
       if(Math.abs(fpt)<1e-9){ logWarn("F'(T)≈0, deteniendo"); break; }
-      const T_new = T_llama - ft/fpt;
+      const T_new = T_llama - ft/fpt;  // T2 = B278 − B314/B315
       const dT = Math.abs(T_new - T_llama);
       logIterBlock(i, [
-        ['T entrada',  T_llama, '°C'],
-        ['F(T)',        ft,      'kcal/h'],
-        ["F'(T)",       fpt,     'kcal/h·°C'],
-        ['T_nueva',    T_new,   '°C'],
-        ['|ΔT|',        dT,      '°C'],
+        ['B278 = T entrada',  T_llama, '°C'],
+        ['B314 = F(T)',        ft,      'kcal/h'],
+        ["B315 = F'(T)",       fpt,     'kcal/h·°C'],
+        ['T2 = B278−B314/B315', T_new, '°C'],
+        ['|ΔT|',               dT,      '°C'],
+        ...LLAMA_CP.map(c => [`k${c.nom} (kmol/h)`, c.k, 'kmol/h']),
+        ...LLAMA_CP.map(c => [`k${c.nom}·H(T) (B${297+LLAMA_CP.indexOf(c)})`, c.k * h_fn(c, T_llama), 'kcal/h']),
       ]);
       regT.push(T_new);
       if(dT < 0.5){
-        T_llama = T_new;
+        T_llama = T_new;  // B278 ← T2
         logOk(`Convergencia en ${i} iteraciones  |ΔT|=${dT.toFixed(4)} °C`);
         break;
       }
-      T_llama = T_new;
+      T_llama = T_new;  // B278 ← T2
     }
     const R3 = Math.round(T_llama*10)/10;
     logRow('R3 – Temperatura de llama', R3, '°C');
@@ -697,7 +711,7 @@ function runAudit(){
     const r7=(R19*r8!==0)?(0.397*I35*R29)/(R19*r8):777;
     const R1B=(n-1)*100;
     const R1C=R17!==0&&R15!==0?R17/R15:777;
-    const R2B=Pt;
+    const R2B=R29!==0?(R37/R29)*100:777;
     const R2C=R29!==0?(R38/R29)*100:777;
     const _dH=HV-HLw; const R5_val=_dH>0?539/_dH:777;
     const R4_val=(I2&&I2!==0&&R5_val!==777)?(R19/(I2*R5_val))*100:777;

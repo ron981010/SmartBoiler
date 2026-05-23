@@ -294,17 +294,18 @@ function calcula_rocio_acido_excel(n_so3, n_h2o, n_total) {
           + 1.06  * Math.pow(Math.log10(ratio_so3 + 8.0), 2.19));
 }
 
-// Coeficientes de entalpía H(T) = a·T⁴ + b·T³ + c·T² + d·T  (T en °C, H en kcal/kmol)
-// Derivados de integrar Cp(T): a_H = a_Cp/4, b_H = b_Cp/3, c_H = c_Cp/2, d_H = d_Cp
+// Coeficientes equivalentes al Excel para H(T)=Cp(T)·T:
+// K_i = (R_i/PM_i)·(a·T^4 + b·T^3 + c·T^2 + d·T)
+// (corresponden a los coeficientes B/D/F/H usados en la hoja)
 // Orden: CO, O2, N2, H2O, SO2, C, CO2
 const COEF_H_LLAMA = [
-  { PM: PMCO,   a: 0,            b: 0,            c: 0.0003,    d: 6.9276 },
-  { PM: PMO2,   a: 2.72675e-11,  b:-2.2197e-7,    c: 0.001380,  d: 7.5181 },
-  { PM: PMN2,   a: 0,            b: 0,            c: 0.00025,   d: 6.773  },
-  { PM: PMH2O,  a: 0,            b: 1.489e-7,     c: 0.0002204, d: 8.361  },
-  { PM: PMSO2,  a: 0,            b:-9.2233e-8,    c: 0.0012115, d: 9.085  },
-  { PM: PMC,    a: 1.6982e-11,   b:-1.38243e-7,   c: 0.001112,  d: 2.4805 },
-  { PM: PMCO2,  a: 2.84e-11,     b:-2.312e-7,     c: 0.0014505, d: 9.571  },
+  { PM: PMCO,   a: 0,            b: 0,            c: 0.0006,    d: 6.9276 },
+  { PM: PMO2,   a: 1.0907e-10,   b:-6.6591e-7,    c: 0.002760,  d: 7.5181 },
+  { PM: PMN2,   a: 0,            b: 0,            c: 0.0005,    d: 6.773  },
+  { PM: PMH2O,  a: 0,            b: 4.467e-7,     c: 0.0004408, d: 8.361  },
+  { PM: PMSO2,  a: 0,            b:-2.767e-7,     c: 0.002423,  d: 9.085  },
+  { PM: PMC,    a: 6.7928e-11,   b:-4.14729e-7,   c: 0.002224,  d: 2.4805 },
+  { PM: PMCO2,  a: 1.136e-10,    b:-6.936e-7,     c: 0.002901,  d: 9.571  },
 ];
 
 /**
