@@ -596,25 +596,27 @@ try {
   log('F147 (H₂O combustión, de PASO 6)', chim.F147, 'kg/h');
   log('F148 (H₂O aire húmedo, de PASO 6)', chim.F148, 'kg/h');
 
-  // Orden idéntico al Excel: B297→CO₂, B298→CO, B299→O₂, B300→N₂, B301→H₂O, B302→SO₂, B303→C
+  // Orden interno de cálculo: CO2, CO, O2, N2, H2O, SO2, C
   const COEF_H = [
-    { R: chim.FCO2,             PM: PMCO2,  a: 1.136e-10,    b:-6.936e-7,    c: 0.002901,  d: 9.571,  nom: 'KCO2' },  // B297  Excel F143÷C96
-    { R: chim.FCO,              PM: PMCO,   a: 0,            b: 0,           c: 0.0006,    d: 6.9276, nom: 'KCO'  },  // B298  Excel F144÷C97
-    { R: chim.FO2,              PM: PMO2,   a: 1.0907e-10,   b:-6.6591e-7,   c: 0.002760,  d: 7.5181, nom: 'KO2'  },  // B299  Excel F145÷C99
-    { R: chim.FN2,              PM: PMN2,   a: 0,            b: 0,           c: 0.0005,    d: 6.773,  nom: 'KN2'  },  // B300  Excel F146÷C98
-    { R: chim.F147 + chim.F148, PM: PMH2O,  a: 0,            b: 4.467e-7,    c: 0.0004408, d: 8.361,  nom: 'KH2O' },  // B301  Excel (F147+F148)÷C101
-    { R: chim.FSO2,             PM: PMSO2,  a: 0,            b:-2.767e-7,    c: 0.002423,  d: 9.085,  nom: 'KSO2' },  // B302  Excel F149÷C100
-    { R: chim.FHollin,          PM: PMC,    a: 6.7928e-11,   b:-4.14729e-7,  c: 0.002224,  d: 2.4805, nom: 'KC'   },  // B303  Excel F150÷C102
+    { R: chim.FCO2,             PM: PMCO2,  a: 1.136e-10,    b:-6.936e-7,    c: 0.002901,  d: 9.571,  nom: 'CO2' },  // B297  Excel F143÷C96
+    { R: chim.FCO,              PM: PMCO,   a: 0,            b: 0,           c: 0.0006,    d: 6.9276, nom: 'CO'  },  // B298  Excel F144÷C97
+    { R: chim.FO2,              PM: PMO2,   a: 1.0907e-10,   b:-6.6591e-7,   c: 0.002760,  d: 7.5181, nom: 'O2'  },  // B299  Excel F145÷C99
+    { R: chim.FN2,              PM: PMN2,   a: 0,            b: 0,           c: 0.0005,    d: 6.773,  nom: 'N2'  },  // B300  Excel F146÷C98
+    { R: chim.F147 + chim.F148, PM: PMH2O,  a: 0,            b: 4.467e-7,    c: 0.0004408, d: 8.361,  nom: 'H2O' },  // B301  Excel (F147+F148)÷C101
+    { R: chim.FSO2,             PM: PMSO2,  a: 0,            b:-2.767e-7,    c: 0.002423,  d: 9.085,  nom: 'SO2' },  // B302  Excel F149÷C100
+    { R: chim.FHollin,          PM: PMC,    a: 6.7928e-11,   b:-4.14729e-7,  c: 0.002224,  d: 2.4805, nom: 'C'   },  // B303  Excel F150÷C102
   ];
 
-  // Mostrar R_i/PM_i (caudal molar de cada componente)
-  COEF_H.forEach(g => log(`  ${g.nom}: R/PM`, rd(g.R / g.PM), 'kmol/h'));
+  // Orden visible para comparar con la hoja: B297→CO, B298→O2, B299→N2, B300→H2O, B301→SO2, B302→C, B303→CO2
+  const COEF_H_EXCEL = [COEF_H[1], COEF_H[2], COEF_H[3], COEF_H[4], COEF_H[5], COEF_H[6], COEF_H[0]];
 
   // F(T) = B276 − SUM(B297:B303)
+  const h_llama = (g, T) => g.a*T*T*T*T + g.b*T*T*T + g.c*T*T + g.d*T;
+  const hp_llama = (g, T) => 4*g.a*T*T*T + 3*g.b*T*T + 2*g.c*T + g.d;
   const FT_llama  = T => QN - COEF_H.reduce((s, g) =>
-    s + (g.R / g.PM) * (g.a*T*T*T*T + g.b*T*T*T + g.c*T*T + g.d*T), 0);
+    s + (g.R / g.PM) * h_llama(g, T), 0);
   const FpT_llama = T =>    - COEF_H.reduce((s, g) =>
-    s + (g.R / g.PM) * (4*g.a*T*T*T  + 3*g.b*T*T  + 2*g.c*T  + g.d), 0);
+    s + (g.R / g.PM) * hp_llama(g, T), 0);
 
   // Bucle Newton-Raphson:
   //   B278 = T_actual  (empieza en 1000, se actualiza a T2 cada vuelta)
@@ -628,6 +630,11 @@ try {
     const ft  = FT_llama(T1);   // B314 = F(T)  = B276 − SUM(B297:B303)
     const fpt = FpT_llama(T1);  // B315 = F'(T) = −SUM(ki′)
     console.log(`    iter ${i}: B278=${T1.toFixed(2)}  B314=F(T)=${ft.toFixed(2)}  B315=F'(T)=${fpt.toFixed(2)}`);
+    COEF_H_EXCEL.forEach((g, idx) => {
+      const kMol = g.R / g.PM;
+      const bCell = 297 + idx;
+      console.log(`      k${g.nom}(B${bCell})=${(kMol * h_llama(g, T1)).toFixed(6)}  k${g.nom}'=${(kMol * hp_llama(g, T1)).toFixed(6)}`);
+    });
     if (Math.abs(fpt) < 1e-9) { warn("F'(T)≈0, deteniendo iteración"); break; }
     const T2 = T1 - ft / fpt;   // T2 = B278 − B314/B315
     regT.push(T2);

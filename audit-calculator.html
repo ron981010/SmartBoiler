@@ -653,7 +653,7 @@ function runAudit(){
     // F147 y F148 vienen de PASO 6
     logRow('F147 (H₂O combustión, de PASO 6)', F147, 'kg/h');
     logRow('F148 (H₂O aire húmedo,  de PASO 6)', F148, 'kg/h');
-    // Orden idéntico al Excel: B297→CO₂, B298→CO, B299→O₂, B300→N₂, B301→H₂O, B302→SO₂, B303→C
+    // Orden interno de cálculo: CO2, CO, O2, N2, H2O, SO2, C
     const LLAMA_CP = [
       { k:FCO2       /PMCO2, a:1.136e-10,   b:-6.936e-7,   c:0.002901,   d:9.571,  nom:'CO2' },  // B297  Excel F143÷C96
       { k:FCO        /PMCO,  a:0,           b:0,           c:0.0006,     d:6.9276, nom:'CO'  },  // B298  Excel F144÷C97
@@ -663,7 +663,7 @@ function runAudit(){
       { k:FSO2       /PMSO2, a:0,           b:-2.767e-7,   c:0.002423,   d:9.085,  nom:'SO2' },  // B302  Excel F149÷C100
       { k:FHollin    /PMC,   a:6.7928e-11,  b:-4.14729e-7, c:0.002224,   d:2.4805, nom:'C'   },  // B303  Excel F150÷C102
     ];
-    LLAMA_CP.forEach(c => logRow(`k${c.nom} = R/PM`, c.k, 'kmol/h'));
+    const LLAMA_CP_EXCEL = [LLAMA_CP[1], LLAMA_CP[2], LLAMA_CP[3], LLAMA_CP[4], LLAMA_CP[5], LLAMA_CP[6], LLAMA_CP[0]];
 
     // H(T)  = (a·T³ + b·T² + c·T + d)·T  = Cp(T)·T
     // H′(T) = 4a·T³ + 3b·T² + 2c·T + d    (derivada, para F′(T))
@@ -691,8 +691,8 @@ function runAudit(){
         ["B315 = F'(T)",       fpt,     'kcal/h·°C'],
         ['T2 = B278−B314/B315', T_new, '°C'],
         ['|ΔT|',               dT,      '°C'],
-        ...LLAMA_CP.map(c => [`k${c.nom} (kmol/h)`, c.k, 'kmol/h']),
-        ...LLAMA_CP.map(c => [`k${c.nom}·H(T) (B${297+LLAMA_CP.indexOf(c)})`, c.k * h_fn(c, T_llama), 'kcal/h']),
+        ...LLAMA_CP_EXCEL.map((c, idx) => [`k${c.nom} (B${297+idx})`, c.k * h_fn(c, T_llama), 'kcal/h']),
+        ...LLAMA_CP_EXCEL.map(c => [`k${c.nom}'`, c.k * cp_fn(c, T_llama), 'kcal/h·°C']),
       ]);
       regT.push(T_new);
       if(dT < 0.5){
