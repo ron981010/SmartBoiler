@@ -460,7 +460,7 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
   const R1A = clasifica_pt(Pt);
   const R1B = (n - 1) * 100;
   const R1C = (R17 !== 0 && R15 !== 0) ? R17 / R15 : 777;
-  const R2B = Pt;
+  const R2B = R29 !== 0 ? (R37 / R29) * 100 : 777;
   const R2C = R29 !== 0 ? (R38 / R29) * 100 : 777;
 
   // PRO
@@ -519,7 +519,7 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
     R1A: R1A,
     R1B: rd(R1B),
     R1C: R1C !== 777 ? rd(R1C) : 777,
-    R2A: rd(f_conv * 100),
+    R2A: rd(100 - Pt),
     R2B: R2B !== 777 ? rd(R2B) : 777,
     R2C: R2C !== 777 ? rd(R2C) : 777,
     R3:  (() => {

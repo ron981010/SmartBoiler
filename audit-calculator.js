@@ -693,7 +693,7 @@ try {
   log('R1C – Ratio aire/comb', rd(R17 / R15));
   log('R2A – Grado de conversión', rd(100 - Pt), '%');
   log('R3  – Temperatura de llama', R3, '°C');
-  log('R2B – % Inquem. sól / Q_comb', rd(Pt), '%');
+  log('R2B – % Inquem. sól / Q_comb', rd((R37 / R29) * 100), '%');
   log('R2C – % Inquem. gas / Q_comb', rd((R38 / R29) * 100), '%');
 
   const r8  = 100 - (I37 + I38 + I39 + I40 + I41 + I42);
