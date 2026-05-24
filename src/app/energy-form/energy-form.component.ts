@@ -725,13 +725,13 @@ export class EnergyFormComponent implements OnInit {
     const pct  = (v: number, t: number) => t > 0 ? (v / t * 100).toFixed(2) : '0.00';
     const tot  = (t: number) => t > 0 ? '100.00' : '0.00';
 
-    const R14  = r.R34 !== 0 ? r.R34 : 1;
-    const pctU = r.R35 / R14 * 100;
-    const pctC = r.R36 / R14 * 100;
+    const R14  = r.R14 !== 0 ? r.R14 : 1;
+    const pctU = r.R9 / R14 * 100;
+    const pctC = r.R10 / R14 * 100;
     const pctS = r.R37 / R14 * 100;
     const pctG = r.R38 / R14 * 100;
-    const pctR = r.R39 !== 777 ? r.R39 / R14 * 100 : 777;
-    const pctP = r.R40 / R14 * 100;
+    const pctR = r.R12 !== 777 ? r.R12 / R14 * 100 : 777;
+    const pctP = r.R13 / R14 * 100;
 
     // ── Guardar resultados ──────────────────────────────────────────────────
     this.evaluationResults = {
@@ -764,9 +764,9 @@ export class EnergyFormComponent implements OnInit {
         perdidasChimenea:   { btu: fmt(r.R10), percent: +pctC.toFixed(1) },
         perdidasInquemados: { btu: fmt(r.R37), percent: +pctS.toFixed(1) },
         perdidasInquemadosGas: { btu: fmt(r.R38), percent: +pctG.toFixed(1) },
-        perdidasRC:         { btu: r.R39 !== 777 ? fmt(r.R39) : '777', percent: pctR !== 777 ? +pctR.toFixed(1) : 777 },
-        perdidasPurgas:     { btu: fmt(r.R40), percent: +pctP.toFixed(1) },
-        total:              { btu: fmt(r.R41), percent: 100 },
+        perdidasRC:         { btu: r.R12 !== 777 ? fmt(r.R12) : '777', percent: pctR !== 777 ? +pctR.toFixed(1) : 777 },
+        perdidasPurgas:     { btu: fmt(r.R13), percent: +pctP.toFixed(1) },
+        total:              { btu: fmt(r.R14), percent: 100 },
       },
       bms: {
         entradas: {
