@@ -746,7 +746,7 @@ export class EnergyFormComponent implements OnInit {
       },
       combustion: {
         excesoAire:                  r.R1B,
-        gradoConversionCombustible:  +(100 - r.PT).toFixed(1),
+        gradoConversionCombustible:  r.R2A,
         eficienciaCombustion:        +pctU.toFixed(1),
       },
       carga: {
