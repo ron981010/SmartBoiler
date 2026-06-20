@@ -471,6 +471,27 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
   const superficie_m2 = (I3 && I3 !== 0) ? I3 * FT2_TO_M2 : 777;
   const R6B_val = (superficie_m2 !== 777 && superficie_m2 !== 0) ? R19 / superficie_m2 : 777;
 
+  // EFI – outputs absolutos y porcentuales
+  const R9_val = R35 - R33;
+  const R10_val = R36 - R30 - R31 - R32;
+  const R11_val = R37 + R38;
+  const R12_val = R39;
+  const R13_val = R40;
+  const R14_val = R29;
+  const pct_of_R14 = (value) => R14_val !== 0 ? (value / R14_val) * 100 : 0;
+  const PCT_R9 = pct_of_R14(R9_val);
+  const PCT_R10 = pct_of_R14(R10_val);
+  const PCT_R37 = pct_of_R14(R37);
+  const PCT_R38 = pct_of_R14(R38);
+  const PCT_R12 = R12_val !== 777 ? pct_of_R14(R12_val) : 777;
+  const PCT_R13 = pct_of_R14(R13_val);
+  const PERDIDAS_TOTAL = R10_val + R37 + R38 + (R12_val !== 777 ? R12_val : 0) + R13_val;
+  const PCT_PERDIDAS_TOTAL = pct_of_R14(PERDIDAS_TOTAL);
+
+  // PRO – propiedades reales empleadas por el cálculo
+  const temperatura_vapor = tipo_vapor === 'Saturado' ? calcula_Ts(I17) : I18;
+  const calor_vapor = B235 - HLw;
+
   // R50 – Temperatura de rocío ácido (fórmula Excel)
   const n_h2o_comb_moles = b / 2.0;
   const n_h2o_air_moles = (Habs / 18.0) * (n * (a + b / 4.0 + e) - c / 2.0) * (PMO2 + (79.0 / 21.0) * PMN2);
@@ -482,6 +503,7 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
   const R50_val = calcula_rocio_acido_excel(e, n_h2o_moles, n_total_moles);
 
   const rd = (v) => Math.round(v * 100) / 100;
+  const rd1 = (v) => Math.round(v * 10) / 10;
 
   return {
     // BMS – Entradas
@@ -535,13 +557,29 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
     R6B: R6B_val !== 777 ? Math.round(R6B_val) : 777,
     R7:  rd(r7),
     R8:  rd(r8),
+    TIPO_COMBUSTIBLE: tipo_combustible,
+    TIPO_VAPOR: tipo_vapor,
+    PRESION_VAPOR: rd(I17),
+    TEMPERATURA_VAPOR: rd(temperatura_vapor),
+    ENTALPIA_VAPOR: rd(B235),
+    ENTALPIA_AGUA: rd(HLw),
+    CALOR_VAPOR: rd(calor_vapor),
     // EFI
-    R9:  rd(R35 - R33),
-    R10: rd(R36 - R30 - R31 - R32),
-    R11: rd(R37 + R38),
-    R12: R39 !== 777 ? rd(R39) : 777,
-    R13: rd(R40),
-    R14: rd(R29),
+    R9:  rd(R9_val),
+    R10: rd(R10_val),
+    R11: rd(R11_val),
+    R12: R12_val !== 777 ? rd(R12_val) : 777,
+    R13: rd(R13_val),
+    R14: rd(R14_val),
+    PCT_R9: rd1(PCT_R9),
+    PCT_R10: rd1(PCT_R10),
+    PCT_R37: rd1(PCT_R37),
+    PCT_R38: rd1(PCT_R38),
+    PCT_R12: PCT_R12 !== 777 ? rd1(PCT_R12) : 777,
+    PCT_R13: rd1(PCT_R13),
+    PERDIDAS_TOTAL: rd(PERDIDAS_TOTAL),
+    PCT_PERDIDAS_TOTAL: rd1(PCT_PERDIDAS_TOTAL),
+    PCT_R14: R14_val !== 0 ? 100 : 0,
     r8:  rd(r8),
     // EMI
     R42: rd(ratios.r42),

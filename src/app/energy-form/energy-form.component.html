@@ -817,7 +817,7 @@
 </div>
 
 <!-- detailed results section -->
-<div class="form-root" *ngIf="evaluationMode && !showCharts && evaluationResults">
+<div class="form-root results-root" *ngIf="evaluationMode && !showCharts && evaluationResults">
   <div class="results-header">
     <h2>{{ activeResultsTab === 'COM' ? 'Combustión' : activeResultsTab === 'PRO' ? 'Producción' : activeResultsTab === 'EFI' ? 'Eficiencia' : activeResultsTab === 'BMS' ? 'B. Materia' : activeResultsTab === 'BEN' ? 'B. Energía' : 'Emisiones' }}</h2>
     <div class="results-header-buttons">
@@ -843,120 +843,382 @@
   </div>
   <div class="selected-caldera">{{ selectedCalderaName }}</div>
   <!-- Vista COM - Combustión -->
-  <div *ngIf="activeResultsTab === 'COM'" class="results-data-table">
-    <div class="data-row">
-      <span class="row-label">Calidad</span>
-      <span class="data-input">{{evaluationResults.com.R1A}}</span>
-      <span class="data-unit"></span>
+  <div *ngIf="activeResultsTab === 'COM'" class="combustion-results">
+    <section class="combustion-status-card">
+      <div class="combustion-icon combustion-icon-fire" aria-hidden="true">
+        <svg viewBox="0 0 32 32">
+          <path d="M18.4 2.8c.8 5.2-2.7 7.2-4.3 10.4-1.2-1.7-1.5-3.6-1.1-5.6-4.5 3.7-7 7.6-7 12.2C6 26 10.5 30 16.1 30S26 26 26 19.8c0-4.4-2.4-8.4-7.6-12.2.4 3.1-.3 5.3-2 7.1-.2-4.1 3.6-6.4 2-11.9Z"/>
+          <path class="combustion-icon-cutout" d="M16.2 18.1c2 2 3 3.7 3 5.2 0 2-1.4 3.4-3.2 3.4-1.9 0-3.3-1.4-3.3-3.4 0-1.7 1.1-3.4 3.5-5.2Z"/>
+        </svg>
+      </div>
+      <div class="combustion-status-copy">
+        <h3>Combustión: <strong>{{ evaluationResults.com.R1A }}</strong></h3>
+        <p>{{ getCombustionQualityDescription() }}</p>
+      </div>
+    </section>
+
+    <section class="combustion-air-card">
+      <div class="combustion-card-heading">
+        <div class="combustion-icon combustion-icon-fan" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="3.2"/>
+            <path d="M16 12.8C13.7 8.4 14.8 3 18 2.2c3.2-.8 5.4 2.3 4.5 5.2-.8 2.7-3.4 4.5-6.5 5.4ZM19.2 16c4.4-2.3 9.8-1.2 10.6 2 .8 3.2-2.3 5.4-5.2 4.5-2.7-.8-4.5-3.4-5.4-6.5ZM16 19.2c2.3 4.4 1.2 9.8-2 10.6-3.2.8-5.4-2.3-4.5-5.2.8-2.7 3.4-4.5 6.5-5.4ZM12.8 16C8.4 18.3 3 17.2 2.2 14c-.8-3.2 2.3-5.4 5.2-4.5 2.7.8 4.5 3.4 5.4 6.5Z"/>
+          </svg>
+        </div>
+        <h3>Exceso de Aire</h3>
+      </div>
+
+      <div class="combustion-air-content">
+        <div class="combustion-air-legend">
+          <strong>{{ getResultFuelLabel() }}</strong>
+          <span><i class="legend-swatch legend-high"></i>Alto: &gt; {{ getExcessAirLimits().max }}%</span>
+          <span><i class="legend-swatch legend-optimal"></i>Óptimo: {{ getExcessAirLimits().min }} - {{ getExcessAirLimits().max }}%</span>
+          <span><i class="legend-swatch legend-low"></i>Bajo: &lt; {{ getExcessAirLimits().min }}%</span>
+        </div>
+
+        <div class="combustion-gauge">
+          <svg viewBox="0 0 280 160" role="img" aria-label="Medidor de exceso de aire">
+            <path class="combustion-gauge-track" pathLength="100" d="M30 135 A110 110 0 0 1 250 135"/>
+            <path class="combustion-gauge-value" pathLength="100" d="M30 135 A110 110 0 0 1 250 135"
+              [attr.stroke]="getExcessAirColor()"
+              [attr.stroke-dasharray]="getCombustionGaugeDasharray()"/>
+            <text class="combustion-gauge-number" x="140" y="128" text-anchor="middle">
+              {{ evaluationResults.com.R1B }}
+              <tspan class="combustion-gauge-unit">%</tspan>
+            </text>
+            <text class="combustion-gauge-min" x="38" y="157">0</text>
+            <text class="combustion-gauge-max" x="236" y="157">100</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <div class="combustion-metrics-grid">
+      <section class="combustion-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-fire" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M18.4 2.8c.8 5.2-2.7 7.2-4.3 10.4-1.2-1.7-1.5-3.6-1.1-5.6-4.5 3.7-7 7.6-7 12.2C6 26 10.5 30 16.1 30S26 26 26 19.8c0-4.4-2.4-8.4-7.6-12.2.4 3.1-.3 5.3-2 7.1-.2-4.1 3.6-6.4 2-11.9Z"/>
+            </svg>
+          </div>
+          <h3>Aire/Combustible</h3>
+        </div>
+        <div class="combustion-metric-value">{{ evaluationResults.com.R1C }}</div>
+        <div class="combustion-metric-status">{{ getCombustionMetricStatus('airFuel') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getCombustionMetricLevel('airFuel')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="combustion-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-conversion" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M16 3a13 13 0 1 0 13 13h-4.2A8.8 8.8 0 1 1 16 7.2V3Z"/>
+              <path d="m18 1 9 4-9 4V1Z"/>
+            </svg>
+          </div>
+          <h3>Grado Conversión</h3>
+        </div>
+        <div class="combustion-metric-value">{{ evaluationResults.combustion.gradoConversionCombustible }}<small>%</small></div>
+        <div class="combustion-metric-status">{{ getCombustionMetricStatus('conversion') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getCombustionMetricLevel('conversion')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="combustion-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-gas" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M16 2C12 8.1 7 13.4 7 20a9 9 0 0 0 18 0c0-6.6-5-11.9-9-18Z"/>
+              <path class="combustion-icon-lines" d="M15 18c-2 3.2-2 5.7 0 8M19 17c-2 3.5-2 6.4 0 9M23 18c-1.6 3-1.6 5.4 0 7.5"/>
+            </svg>
+          </div>
+          <h3>Inquem. gaseosos</h3>
+        </div>
+        <div class="combustion-metric-value">{{ evaluationResults.com.R2C }}<small>%</small></div>
+        <div class="combustion-metric-status">{{ getCombustionMetricStatus('gas') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getCombustionMetricLevel('gas')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="combustion-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-solids" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <circle cx="16" cy="7" r="6"/>
+              <circle cx="9" cy="21" r="6"/>
+              <circle cx="23" cy="21" r="6"/>
+            </svg>
+          </div>
+          <h3>Inquem. sólidos</h3>
+        </div>
+        <div class="combustion-metric-value">{{ evaluationResults.com.R2B }}<small>%</small></div>
+        <div class="combustion-metric-status">{{ getCombustionMetricStatus('solids') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getCombustionMetricLevel('solids')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
     </div>
-    <div class="data-row">
-      <span class="row-label">Exceso de aire (EA)</span>
-      <span class="data-input">{{evaluationResults.com.R1B}}</span>
-      <span class="data-unit">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Aire·Combustible</span>
-      <span class="data-input">{{evaluationResults.com.R1C}}</span>
-      <span class="data-unit">λ</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Grado de Conversión</span>
-      <span class="data-input">{{evaluationResults.combustion.gradoConversionCombustible}}</span>
-      <span class="data-unit">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Inquemados sólidos</span>
-      <span class="data-input">{{evaluationResults.com.R2B}}</span>
-      <span class="data-unit">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Inquemados gaseosos</span>
-      <span class="data-input">{{evaluationResults.com.R2C}}</span>
-      <span class="data-unit">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Temperatura de llama</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.com.R3, 'temp_c')}}</span>
-      <span class="data-unit">{{getResultsUnit('temp_c', '°C')}}</span>
-    </div>
+
+    <section class="combustion-temperature-card">
+      <div class="combustion-card-heading">
+        <div class="combustion-icon combustion-icon-thermometer" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M12 5a4 4 0 0 1 8 0v13.2a8 8 0 1 1-8 0V5Z"/>
+            <path class="combustion-icon-cutout" d="M15 6h2v15.3a4 4 0 1 1-2 0V6Z"/>
+          </svg>
+        </div>
+        <h3>Temperatura de llama</h3>
+      </div>
+      <div class="combustion-temperature-value">
+        {{ displayResultValue(evaluationResults.com.R3, 'temp_c') }}
+        <small>{{ getResultsUnit('temp_c', '°C') }}</small>
+      </div>
+      <div class="combustion-temperature-scale">
+        <div class="temperature-labels">
+          <span>1000</span><span>1400</span><span>1800</span><span>2200</span>
+        </div>
+        <div class="temperature-track">
+          <i class="temperature-marker" [style.left.%]="getFlameTemperaturePosition()"></i>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Vista PRO - Producción -->
-  <div *ngIf="activeResultsTab === 'PRO'" class="results-data-table">
-    <div class="data-row">
-      <span class="row-label">Producción de Vapor</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.carga.produccionVapor, 'mass_flow')}}</span>
-      <span class="data-unit">{{getResultsUnit('mass_flow', 'kg/h')}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Factor de Carga</span>
-      <span class="data-input">{{evaluationResults.carga.factorCarga}}</span>
-      <span class="data-unit">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Factor de Evaporación</span>
-      <span class="data-input">{{evaluationResults.carga.factorEvaporacion}}</span>
-      <span class="data-unit"></span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Energía/Vapor</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ratios.consumoEnergiaVapor, 'energy_specific')}}</span>
-      <span class="data-unit">{{getResultsUnit('energy_specific', 'kcal/kg')}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Vapor/Superficie</span>
-      <span class="data-input">{{evaluationResults.ratios.produccionVaporSuperficie}}</span>
-      <span class="data-unit">kg/m²</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Costos del Vapor</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ratios.costoVapor, 'cost_mass')}}</span>
-      <span class="data-unit">{{getResultsUnit('cost_mass', 'US$/t')}}</span>
+  <div *ngIf="activeResultsTab === 'PRO'" class="combustion-results production-results">
+    <section class="production-summary-card">
+      <div class="production-summary-main">
+        <div class="combustion-card-heading production-summary-heading">
+          <div class="combustion-icon combustion-icon-fire" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M18.4 2.8c.8 5.2-2.7 7.2-4.3 10.4-1.2-1.7-1.5-3.6-1.1-5.6-4.5 3.7-7 7.6-7 12.2C6 26 10.5 30 16.1 30S26 26 26 19.8c0-4.4-2.4-8.4-7.6-12.2.4 3.1-.3 5.3-2 7.1-.2-4.1 3.6-6.4 2-11.9Z"/>
+              <path class="combustion-icon-cutout" d="M16.2 18.1c2 2 3 3.7 3 5.2 0 2-1.4 3.4-3.2 3.4-1.9 0-3.3-1.4-3.3-3.4 0-1.7 1.1-3.4 3.5-5.2Z"/>
+            </svg>
+          </div>
+          <h3>Producción</h3>
+        </div>
+        <div class="production-output-value">
+          {{ getProductionOutputValue() }}
+          <small>{{ getResultsUnit('mass_flow', 'kg/h') }}</small>
+        </div>
+      </div>
+
+      <div class="production-steam-details">
+        <span><strong>Vapor:</strong> {{ getSteamTypeLabel() }}</span>
+        <span><strong>Presión:</strong> {{ getProductionPressureValue() }} {{ getProductionPressureUnit() }}</span>
+        <span><strong>Temperatura:</strong> {{ displayResultValue(getSteamTemperatureC(), 'temp_c') }} {{ getResultsUnit('temp_c', '°C') }}</span>
+        <span><strong>Calor:</strong> {{ displayResultValue(getSteamHeatValue(), 'energy_specific') }} {{ getResultsUnit('energy_specific', 'kcal/kg') }}</span>
+      </div>
+    </section>
+
+    <section class="combustion-air-card production-load-card">
+      <div class="combustion-card-heading">
+        <div class="combustion-icon combustion-icon-fan" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="3.2"/>
+            <path d="M16 12.8C13.7 8.4 14.8 3 18 2.2c3.2-.8 5.4 2.3 4.5 5.2-.8 2.7-3.4 4.5-6.5 5.4ZM19.2 16c4.4-2.3 9.8-1.2 10.6 2 .8 3.2-2.3 5.4-5.2 4.5-2.7-.8-4.5-3.4-5.4-6.5ZM16 19.2c2.3 4.4 1.2 9.8-2 10.6-3.2.8-5.4-2.3-4.5-5.2.8-2.7 3.4-4.5 6.5-5.4ZM12.8 16C8.4 18.3 3 17.2 2.2 14c-.8-3.2 2.3-5.4 5.2-4.5 2.7.8 4.5 3.4 5.4 6.5Z"/>
+          </svg>
+        </div>
+        <h3>Factor de Carga</h3>
+      </div>
+
+      <div class="combustion-air-content production-load-content">
+        <div class="combustion-air-legend production-load-legend">
+          <span><i class="legend-swatch production-legend-high"></i>Alto: &gt; 70%</span>
+          <span><i class="legend-swatch production-legend-medium"></i>Medio: 40 - 70%</span>
+          <span><i class="legend-swatch production-legend-low"></i>Bajo: &lt; 40%</span>
+        </div>
+
+        <div class="combustion-gauge production-gauge">
+          <svg viewBox="0 0 280 160" role="img" aria-label="Medidor de factor de carga">
+            <path class="combustion-gauge-track" pathLength="100" d="M30 135 A110 110 0 0 1 250 135"/>
+            <path class="combustion-gauge-value" pathLength="100" d="M30 135 A110 110 0 0 1 250 135"
+              [attr.stroke]="getProductionLoadColor()"
+              [attr.stroke-dasharray]="getProductionLoadGaugeDasharray()"/>
+            <text class="combustion-gauge-number" x="140" y="128" text-anchor="middle">
+              {{ evaluationResults.carga.factorCarga }}
+              <tspan class="combustion-gauge-unit">%</tspan>
+            </text>
+            <text class="combustion-gauge-min" x="38" y="157">0</text>
+            <text class="combustion-gauge-max" x="236" y="157">100</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <div class="combustion-metrics-grid production-metrics-grid">
+      <section class="combustion-metric-card production-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-fire" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M18.4 2.8c.8 5.2-2.7 7.2-4.3 10.4-1.2-1.7-1.5-3.6-1.1-5.6-4.5 3.7-7 7.6-7 12.2C6 26 10.5 30 16.1 30S26 26 26 19.8c0-4.4-2.4-8.4-7.6-12.2.4 3.1-.3 5.3-2 7.1-.2-4.1 3.6-6.4 2-11.9Z"/>
+            </svg>
+          </div>
+          <h3>Energía / Vapor</h3>
+        </div>
+        <div class="combustion-metric-value production-metric-value">
+          {{ displayResultValue(evaluationResults.ratios.consumoEnergiaVapor, 'energy_specific') }}
+          <small>{{ getResultsUnit('energy_specific', 'kcal/kg') }}</small>
+        </div>
+        <div class="combustion-metric-status production-metric-status">{{ getProductionMetricStatus('energyVapor') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getProductionMetricLevel('energyVapor')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="combustion-metric-card production-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-conversion" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M16 3a13 13 0 1 0 13 13h-4.2A8.8 8.8 0 1 1 16 7.2V3Z"/>
+              <path d="m18 1 9 4-9 4V1Z"/>
+            </svg>
+          </div>
+          <h3>Vapor / Superficie</h3>
+        </div>
+        <div class="combustion-metric-value production-metric-value">
+          {{ evaluationResults.ratios.produccionVaporSuperficie }}
+          <small>kg/m²</small>
+        </div>
+        <div class="combustion-metric-status production-metric-status">{{ getProductionMetricStatus('vaporSurface') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getProductionMetricLevel('vaporSurface')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="combustion-metric-card production-metric-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon combustion-icon-gas" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path d="M16 2C12 8.1 7 13.4 7 20a9 9 0 0 0 18 0c0-6.6-5-11.9-9-18Z"/>
+              <path class="combustion-icon-lines" d="M15 18c-2 3.2-2 5.7 0 8M19 17c-2 3.5-2 6.4 0 9M23 18c-1.6 3-1.6 5.4 0 7.5"/>
+            </svg>
+          </div>
+          <h3>Factor Evaporación</h3>
+        </div>
+        <div class="combustion-metric-value production-metric-value">{{ evaluationResults.carga.factorEvaporacion }}</div>
+        <div class="combustion-metric-status production-metric-status">{{ getProductionMetricStatus('evaporation') }}</div>
+        <div class="combustion-level" [ngClass]="'combustion-level-' + getProductionMetricLevel('evaporation')">
+          <i></i><i></i><i></i>
+        </div>
+      </section>
+
+      <section class="combustion-metric-card production-metric-card production-cost-card">
+        <div class="combustion-card-heading">
+          <div class="combustion-icon production-icon-cost" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <circle cx="16" cy="16" r="15"/>
+              <path class="production-currency-mark" d="M20.5 10.2c-1.1-1.1-2.6-1.7-4.4-1.7-2.4 0-4.1 1.1-4.1 2.9 0 4.8 9.2 2.3 9.2 7 0 2-1.8 3.2-4.5 3.2-2.1 0-4-.8-5.3-2.1M16.2 5.8v20.4"/>
+            </svg>
+          </div>
+          <h3>Costo de Vapor</h3>
+        </div>
+        <div class="combustion-metric-value production-metric-value">
+          {{ displayResultValue(evaluationResults.ratios.costoVapor, 'cost_mass') }}
+          <small>{{ getResultsUnit('cost_mass', 'US$/t') }}</small>
+        </div>
+        <div class="production-cost-detail">Energía: {{ getEnergyCostPercent() }}%</div>
+      </section>
     </div>
   </div>
 
   <!-- Vista EFI - Eficiencia -->
-  <div *ngIf="activeResultsTab === 'EFI'" class="results-data-table">
-    <div class="efficiency-header">
-      <span class="header-label"> </span>
-      <span class="header-code">{{getResultsUnit('energy_flow', 'kcal/h')}}</span>
-      <span class="header-percent">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Eficiencia</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.calorUtil.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.calorUtil.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">P Chimenea</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasChimenea.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.perdidasChimenea.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">P Inquemados Sol.</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasInquemados.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.perdidasInquemados.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">P Inquemados Gas.</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasInquemadosGas.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.perdidasInquemadosGas.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">P Rad. + Conv.</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasRC.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.perdidasRC.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">P Purgas</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.perdidasPurgas.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.perdidasPurgas.percent}}</span>
-    </div>
-    <div class="data-row total-row">
-      <span class="row-label">Total</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.eficiencia.total.btu, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.eficiencia.total.percent}}</span>
-    </div>
+  <div *ngIf="activeResultsTab === 'EFI'" class="combustion-results efficiency-results">
+    <section class="combustion-air-card efficiency-gauge-card">
+      <div class="combustion-card-heading">
+        <div class="combustion-icon combustion-icon-fan" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="3.2"/>
+            <path d="M16 12.8C13.7 8.4 14.8 3 18 2.2c3.2-.8 5.4 2.3 4.5 5.2-.8 2.7-3.4 4.5-6.5 5.4ZM19.2 16c4.4-2.3 9.8-1.2 10.6 2 .8 3.2-2.3 5.4-5.2 4.5-2.7-.8-4.5-3.4-5.4-6.5ZM16 19.2c2.3 4.4 1.2 9.8-2 10.6-3.2.8-5.4-2.3-4.5-5.2.8-2.7 3.4-4.5 6.5-5.4ZM12.8 16C8.4 18.3 3 17.2 2.2 14c-.8-3.2 2.3-5.4 5.2-4.5 2.7.8 4.5 3.4 5.2 6.5Z"/>
+          </svg>
+        </div>
+        <h3>Eficiencia</h3>
+      </div>
+
+      <div class="combustion-air-content efficiency-gauge-content">
+        <div class="combustion-air-legend efficiency-legend">
+          <span><i class="legend-swatch production-legend-high"></i>Alta: &gt; 80%</span>
+          <span><i class="legend-swatch production-legend-medium"></i>Media: 70 - 80%</span>
+          <span><i class="legend-swatch production-legend-low"></i>Baja: &lt; 70%</span>
+          <strong>Energía útil</strong>
+        </div>
+
+        <div class="combustion-gauge efficiency-gauge">
+          <svg viewBox="0 0 280 160" role="img" aria-label="Medidor de eficiencia">
+            <path class="combustion-gauge-track" pathLength="100" d="M30 135 A110 110 0 0 1 250 135"/>
+            <path class="combustion-gauge-value" pathLength="100" d="M30 135 A110 110 0 0 1 250 135"
+              [attr.stroke]="getEfficiencyColor()"
+              [attr.stroke-dasharray]="getEfficiencyGaugeDasharray()"/>
+            <text class="combustion-gauge-number" x="140" y="128" text-anchor="middle">
+              {{ evaluationResults.eficiencia.calorUtil.percent }}
+              <tspan class="combustion-gauge-unit">%</tspan>
+            </text>
+            <text class="combustion-gauge-min" x="38" y="157">0</text>
+            <text class="combustion-gauge-max" x="236" y="157">100</text>
+          </svg>
+          <div class="efficiency-useful-energy">
+            {{ getEfficiencyEnergyValue(evaluationResults.eficiencia.calorUtil.btu) }}
+            {{ getResultsUnit('energy_flow', 'kcal/h') }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="efficiency-losses-card">
+      <div class="combustion-card-heading efficiency-losses-heading">
+        <div class="combustion-icon combustion-icon-fire" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M18.4 2.8c.8 5.2-2.7 7.2-4.3 10.4-1.2-1.7-1.5-3.6-1.1-5.6-4.5 3.7-7 7.6-7 12.2C6 26 10.5 30 16.1 30S26 26 26 19.8c0-4.4-2.4-8.4-7.6-12.2.4 3.1-.3 5.3-2 7.1-.2-4.1 3.6-6.4 2-11.9Z"/>
+              <path class="combustion-icon-cutout" d="M16.2 18.1c2 2 3 3.7 3 5.2 0 2-1.4 3.4-3.2 3.4-1.9 0-3.3-1.4-3.3-3.4 0-1.7 1.1-3.4 3.5-5.2Z"/>
+          </svg>
+        </div>
+        <h3>Pérdidas</h3>
+      </div>
+
+      <div class="efficiency-loss-row" *ngFor="let loss of getEfficiencyLossRows()">
+        <div class="efficiency-loss-label">{{ loss.label }}</div>
+        <div class="efficiency-loss-body">
+          <div class="efficiency-loss-scale">
+            <div class="efficiency-loss-track">
+              <i [style.width.%]="getEfficiencyLossBarWidth(loss.percent)"
+                [style.background]="getEfficiencyLossColor(loss.percent)"></i>
+            </div>
+            <div class="efficiency-loss-axis">
+              <span>0</span>
+              <span>{{ getEfficiencyLossStatus(loss.percent) }}</span>
+              <span>20</span>
+            </div>
+          </div>
+          <div class="efficiency-loss-reading">
+            <strong>{{ loss.percent === 777 ? 'N/A' : (loss.percent + '%') }}</strong>
+            <span>{{ getEfficiencyEnergyValue(loss.energy) }} {{ getResultsUnit('energy_flow', 'kcal/h') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="efficiency-loss-total">
+        <span>Pérdidas totales</span>
+        <div>
+          <strong>{{ getEfficiencyLossTotalPercent() }}%</strong>
+          <small>{{ getEfficiencyEnergyValue(getEfficiencyLossTotalEnergy()) }} {{ getResultsUnit('energy_flow', 'kcal/h') }}</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="efficiency-net-card">
+      <div>
+        <strong>Energía neta</strong>
+        <span>Combustible: {{ getResultFuelLabel() }}</span>
+      </div>
+      <div>
+        <strong>{{ evaluationResults.eficiencia.total.percent | number:'1.1-1' }}%</strong>
+        <span>{{ getEfficiencyEnergyValue(evaluationResults.eficiencia.total.btu) }} {{ getResultsUnit('energy_flow', 'kcal/h') }}</span>
+      </div>
+    </section>
   </div>
 
   <!-- Vista BMS - Balance de Materia -->
@@ -1115,61 +1377,74 @@
   </div>
 
   <!-- Vista EMI - Emisiones -->
-  <div *ngIf="activeResultsTab === 'EMI'" class="results-data-table">
-    <div class="efficiency-header">
-      <span class="header-label">Emisiones</span>
-      <span class="header-code">{{getResultsUnit('emission_factor', 'kg/Gcal')}}</span>
-      <span class="header-percent">{{getResultsUnit('annual_mass', 't/año')}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">CO₂</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.emi.R42, 'emission_factor')}}</span>
-      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R46, 'annual_mass')}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">CO</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.emi.R43, 'emission_factor')}}</span>
-      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R47, 'annual_mass')}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Holín</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.emi.R44, 'emission_factor')}}</span>
-      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R48, 'annual_mass')}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">SO₂</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.emi.R45, 'emission_factor')}}</span>
-      <span class="data-unit">{{displayResultValue(evaluationResults.emi.R49, 'annual_mass')}}</span>
-    </div>
-    <h3 style="margin: 16px 0 8px 0; font-weight: 600; color: #333; font-size: 13px;">Rocío ácido</h3>
-    <div class="data-row">
-      <span class="row-label">Temperatura</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.emi.R50, 'temp_c')}}</span>
-      <span class="data-unit">{{getResultsUnit('temp_c', '°C')}}</span>
-    </div>
+  <div *ngIf="activeResultsTab === 'EMI'" class="combustion-results emissions-results">
+    <section class="emissions-list-card">
+      <div class="combustion-card-heading">
+        <div class="combustion-icon combustion-icon-fan" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="3.2"/>
+            <path d="M16 12.8C13.7 8.4 14.8 3 18 2.2c3.2-.8 5.4 2.3 4.5 5.2-.8 2.7-3.4 4.5-6.5 5.4ZM19.2 16c4.4-2.3 9.8-1.2 10.6 2 .8 3.2-2.3 5.4-5.2 4.5-2.7-.8-4.5-3.4-5.4-6.5ZM16 19.2c2.3 4.4 1.2 9.8-2 10.6-3.2.8-5.4-2.3-4.5-5.2.8-2.7 3.4-4.5 6.5-5.4ZM12.8 16C8.4 18.3 3 17.2 2.2 14c-.8-3.2 2.3-5.4 5.2-4.5 2.7.8 4.5 3.4 5.2 6.5Z"/>
+          </svg>
+        </div>
+        <h3>Emisiones</h3>
+      </div>
+
+      <div class="emission-row" *ngFor="let emission of getEmissionRows()">
+        <div class="emission-name">
+          <strong>{{ emission.symbol }}</strong>
+          <span>{{ emission.description }}</span>
+        </div>
+        <div class="emission-values">
+          <strong>
+            {{ displayResultValue(emission.factor, 'emission_factor') }}
+            <small>{{ getResultsUnit('emission_factor', 'kg/Gcal') }}</small>
+          </strong>
+          <span>
+            {{ displayResultValue(emission.annual, 'annual_mass') }}
+            {{ getResultsUnit('annual_mass', 't/año') }}
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <section class="emissions-dew-card">
+      <div class="combustion-card-heading">
+        <div class="combustion-icon combustion-icon-thermometer" aria-hidden="true">
+          <svg viewBox="0 0 32 32">
+            <path d="M12 5a4 4 0 0 1 8 0v13.2a8 8 0 1 1-8 0V5Z"/>
+            <path class="combustion-icon-cutout" d="M15 6h2v15.3a4 4 0 1 1-2 0V6Z"/>
+          </svg>
+        </div>
+        <h3>Temperatura de Rocío</h3>
+      </div>
+
+      <div class="emissions-dew-value">
+        {{ displayResultValue(evaluationResults.emi.R50, 'temp_c') }}
+        <small>{{ getResultsUnit('temp_c', '°C') }}</small>
+      </div>
+
+      <div class="emissions-dew-scale">
+        <div class="emissions-dew-labels">
+          <span>{{ getDewScaleLabel(100) }}</span>
+          <span>{{ getDewScaleLabel(150) }}</span>
+          <span>{{ getDewScaleLabel(200) }}</span>
+        </div>
+        <div class="emissions-dew-track">
+          <i [style.left.%]="getDewTemperaturePosition()"></i>
+        </div>
+      </div>
+
+      <div class="emissions-fuel">Combustible: {{ getResultFuelLabel() }}</div>
+    </section>
   </div>
 
-  <!-- Botón de Gráficas y Navegación (Sticky Footer) -->
-  <div class="results-footer">
-    <div class="results-footer-top">
-      <button class="charts-btn-fixed" (click)="toggleCharts()" title="Ver gráficas">📊</button>
-    </div>
-
+  <div class="results-save-area">
     <div class="error-message" *ngIf="saveError">
       <span>{{ saveError }}</span>
     </div>
-
-    <div class="results-footer-bottom results-actions-row">
-      <button class="nav-btn nav-btn-prev results-back-btn" (click)="handleResultsBack()">
-        <span class="btn-arrow">◀</span>
-      </button>
-      <button class="nav-btn nav-btn-center results-save-btn" (click)="saveEvaluation()" [disabled]="savingEvaluation">
-        <span class="results-save-label" *ngIf="!savingEvaluation">Guardar Reporte</span>
-        <span class="results-save-label" *ngIf="savingEvaluation">Guardando...</span>
-      </button>
-      <button class="nav-btn nav-btn-next results-next-btn" (click)="goToNextResultTab()">
-        <span class="btn-arrow">▶</span>
-      </button>
-    </div>
+    <button class="results-save-btn" (click)="saveEvaluation()" [disabled]="savingEvaluation">
+      <span *ngIf="!savingEvaluation">Guardar Reporte</span>
+      <span *ngIf="savingEvaluation">Guardando...</span>
+    </button>
   </div>
 </div>

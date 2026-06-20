@@ -12,6 +12,20 @@ import * as ApexCharts from 'apexcharts';
 export type ChartOptions = ApexCharts.ApexOptions;
 type ResultsUnitSystem = 'USB' | 'LKS' | 'SI';
 type ResultsQuantity = 'temp_c' | 'mass_flow' | 'energy_flow' | 'energy_specific' | 'emission_factor' | 'annual_mass' | 'cost_mass';
+type CombustionMetric = 'airFuel' | 'conversion' | 'gas' | 'solids';
+type CombustionLevel = 'low' | 'medium' | 'high';
+type ProductionMetric = 'energyVapor' | 'vaporSurface' | 'evaporation';
+interface EfficiencyLossRow {
+  label: string;
+  percent: number;
+  energy: any;
+}
+interface EmissionRow {
+  symbol: string;
+  description: string;
+  factor: number;
+  annual: number;
+}
 
 interface FieldConfig {
   id: string;
@@ -725,13 +739,12 @@ export class EnergyFormComponent implements OnInit {
     const pct  = (v: number, t: number) => t > 0 ? (v / t * 100).toFixed(2) : '0.00';
     const tot  = (t: number) => t > 0 ? '100.00' : '0.00';
 
-    const R14  = r.R14 !== 0 ? r.R14 : 1;
-    const pctU = r.R9 / R14 * 100;
-    const pctC = r.R10 / R14 * 100;
-    const pctS = r.R37 / R14 * 100;
-    const pctG = r.R38 / R14 * 100;
-    const pctR = r.R12 !== 777 ? r.R12 / R14 * 100 : 777;
-    const pctP = r.R13 / R14 * 100;
+    const pctU = r.PCT_R9;
+    const pctC = r.PCT_R10;
+    const pctS = r.PCT_R37;
+    const pctG = r.PCT_R38;
+    const pctR = r.PCT_R12;
+    const pctP = r.PCT_R13;
 
     // ── Guardar resultados ──────────────────────────────────────────────────
     this.evaluationResults = {
@@ -752,21 +765,32 @@ export class EnergyFormComponent implements OnInit {
       carga: {
         factorCarga:      r.R4,
         factorEvaporacion: r.R5,
-        produccionVapor:  r.R19,
+        produccionVapor:  r.R19_pro,
       },
       ratios: {
         consumoEnergiaVapor:       r.R6A,
         produccionVaporSuperficie: r.R6B,
         costoVapor:                r.R7,
       },
+      produccion: {
+        combustible:       r.TIPO_COMBUSTIBLE,
+        tipoVapor:         r.TIPO_VAPOR,
+        presionVapor:      r.PRESION_VAPOR,
+        temperaturaVapor:  r.TEMPERATURA_VAPOR,
+        entalpiaVapor:     r.ENTALPIA_VAPOR,
+        entalpiaAgua:      r.ENTALPIA_AGUA,
+        calorVapor:        r.CALOR_VAPOR,
+        costoEnergia:      r.R8,
+      },
       eficiencia: {
-        calorUtil:          { btu: fmt(r.R9),  percent: +pctU.toFixed(1) },
-        perdidasChimenea:   { btu: fmt(r.R10), percent: +pctC.toFixed(1) },
-        perdidasInquemados: { btu: fmt(r.R37), percent: +pctS.toFixed(1) },
-        perdidasInquemadosGas: { btu: fmt(r.R38), percent: +pctG.toFixed(1) },
-        perdidasRC:         { btu: r.R12 !== 777 ? fmt(r.R12) : '777', percent: pctR !== 777 ? +pctR.toFixed(1) : 777 },
-        perdidasPurgas:     { btu: fmt(r.R13), percent: +pctP.toFixed(1) },
-        total:              { btu: fmt(r.R14), percent: 100 },
+        calorUtil:          { btu: fmt(r.R9),  percent: pctU },
+        perdidasChimenea:   { btu: fmt(r.R10), percent: pctC },
+        perdidasInquemados: { btu: fmt(r.R37), percent: pctS },
+        perdidasInquemadosGas: { btu: fmt(r.R38), percent: pctG },
+        perdidasRC:         { btu: r.R12 !== 777 ? fmt(r.R12) : '777', percent: pctR },
+        perdidasPurgas:     { btu: fmt(r.R13), percent: pctP },
+        perdidasTotales:    { btu: fmt(r.PERDIDAS_TOTAL), percent: r.PCT_PERDIDAS_TOTAL },
+        total:              { btu: fmt(r.R14), percent: r.PCT_R14 },
       },
       bms: {
         entradas: {
@@ -812,7 +836,7 @@ export class EnergyFormComponent implements OnInit {
         R46: r.R46, R47: r.R47, R48: r.R48, R49: r.R49,
         R50: r.R50,
       },
-      graficoEficiencia: +pctU.toFixed(1),
+      graficoEficiencia: pctU,
     };
 
     console.log('evaluationResults (backend):', this.evaluationResults);
@@ -922,6 +946,259 @@ export class EnergyFormComponent implements OnInit {
   getGaugeArc(value: number, maxVal: number = 100): string {
     const pct = Math.min(Math.max(value / maxVal, 0), 1);
     return `${(pct * 251.3).toFixed(1)} 502.6`;
+  }
+
+  getCombustionQualityDescription(): string {
+    const descriptions: Record<string, string> = {
+      'Excelente': 'Operación estable, limpia y dentro de los valores óptimos de combustión.',
+      'Muy buena': 'Condición eficiente con desviaciones mínimas respecto a los valores óptimos.',
+      'Buena': 'Condición funcional adecuada con oportunidades menores de ajuste.',
+      'Aceptable': 'Condición funcional mínima que permite la operación del sistema, pero con desviaciones moderadas respecto a los valores óptimos.',
+      'Pobre': 'La combustión requiere ajustes para reducir pérdidas y mejorar la estabilidad.',
+      'Deficiente': 'Condición de combustión ineficiente que requiere revisión técnica prioritaria.',
+      'Muy deficiente': 'Desviaciones severas que comprometen la eficiencia y la calidad de combustión.',
+      'Critica': 'Condición crítica; se recomienda detener y revisar el sistema de combustión.',
+      'Peligrosa': 'Condición peligrosa que requiere intervención técnica inmediata.',
+      'Muy peligrosa': 'Riesgo operativo muy alto; no se recomienda continuar la operación.'
+    };
+    const quality = String(this.evaluationResults?.com?.R1A || '');
+    return descriptions[quality] || 'Resumen del estado actual de la combustión calculado con los datos de la evaluación.';
+  }
+
+  getExcessAirLimits(): { min: number; max: number } {
+    const ranges: Record<string, { min: number; max: number }> = {
+      'Gas Natural Camisea': { min: 5, max: 15 },
+      'Gas Natural Talara': { min: 5, max: 15 },
+      'GLP': { min: 10, max: 20 },
+      'Diesel': { min: 15, max: 22 },
+      'P.I.6': { min: 20, max: 30 },
+      'P.I.500': { min: 25, max: 35 }
+    };
+    return ranges[this.getResultFuelLabel()] || ranges['Diesel'];
+  }
+
+  getExcessAirColor(): string {
+    const value = Number(this.evaluationResults?.com?.R1B) || 0;
+    const limits = this.getExcessAirLimits();
+    if (value < limits.min) return '#f7e62f';
+    if (value <= limits.max) return '#8bd264';
+    return '#ff4d00';
+  }
+
+  getCombustionGaugeDasharray(): string {
+    const value = Number(this.evaluationResults?.com?.R1B) || 0;
+    const clamped = Math.min(Math.max(value, 0), 100);
+    return `${clamped} ${100 - clamped}`;
+  }
+
+  getCombustionMetricLevel(metric: CombustionMetric): CombustionLevel {
+    const com = this.evaluationResults?.com;
+    if (!com) return 'low';
+
+    const value = Number(
+      metric === 'airFuel' ? com.R1C :
+      metric === 'conversion' ? com.R2A :
+      metric === 'gas' ? com.R2C :
+      com.R2B
+    ) || 0;
+
+    if (metric === 'airFuel') {
+      return value < 25 ? 'low' : value < 35 ? 'medium' : 'high';
+    }
+    if (metric === 'conversion') {
+      return value < 95 ? 'low' : value < 99.5 ? 'medium' : 'high';
+    }
+    return value < 0.5 ? 'low' : value < 1.5 ? 'medium' : 'high';
+  }
+
+  getCombustionMetricStatus(metric: CombustionMetric): string {
+    const labels: Record<CombustionLevel, string> = {
+      low: 'Bajo',
+      medium: 'Medio',
+      high: 'Alto'
+    };
+    return labels[this.getCombustionMetricLevel(metric)];
+  }
+
+  getFlameTemperaturePosition(): number {
+    const value = Number(this.evaluationResults?.com?.R3) || 1000;
+    return Math.min(Math.max(((value - 1000) / 1200) * 100, 0), 100);
+  }
+
+  getSteamTypeLabel(): string {
+    return this.evaluationResults?.produccion?.tipoVapor || 'N/A';
+  }
+
+  getProductionOutputValue(): string {
+    const value = Number(this.evaluationResults?.carga?.produccionVapor) || 0;
+    if (this.resultsUnitSystem === 'USB') {
+      return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+    return String(this.displayResultValue(value, 'mass_flow'));
+  }
+
+  getSteamTemperatureC(): number {
+    return Number(this.evaluationResults?.produccion?.temperaturaVapor) || 0;
+  }
+
+  getSteamHeatValue(): number {
+    return Number(this.evaluationResults?.produccion?.calorVapor) || 0;
+  }
+
+  getProductionPressureValue(): string {
+    const pressurePsi = Number(this.evaluationResults?.produccion?.presionVapor) || 0;
+    const value = this.resultsUnitSystem === 'LKS'
+      ? pressurePsi * 0.07030696
+      : this.resultsUnitSystem === 'SI'
+        ? pressurePsi * 0.00689476
+        : pressurePsi;
+    return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  getProductionPressureUnit(): string {
+    if (this.resultsUnitSystem === 'LKS') return 'kg/cm² g';
+    if (this.resultsUnitSystem === 'SI') return 'MPa g';
+    return 'Psi g';
+  }
+
+  getProductionLoadColor(): string {
+    const value = Number(this.evaluationResults?.carga?.factorCarga) || 0;
+    if (value > 70) return '#8bd264';
+    if (value >= 40) return '#ffd000';
+    return '#ed1717';
+  }
+
+  getProductionLoadGaugeDasharray(): string {
+    const value = Number(this.evaluationResults?.carga?.factorCarga) || 0;
+    const clamped = Math.min(Math.max(value, 0), 100);
+    return `${clamped} ${100 - clamped}`;
+  }
+
+  getProductionMetricLevel(metric: ProductionMetric): CombustionLevel {
+    const value = Number(
+      metric === 'energyVapor'
+        ? this.evaluationResults?.ratios?.consumoEnergiaVapor
+        : metric === 'vaporSurface'
+          ? this.evaluationResults?.ratios?.produccionVaporSuperficie
+          : this.evaluationResults?.carga?.factorEvaporacion
+    ) || 0;
+
+    if (metric === 'energyVapor') {
+      return value < 700 ? 'low' : value <= 900 ? 'medium' : 'high';
+    }
+    if (metric === 'vaporSurface') {
+      return value < 700 ? 'low' : value <= 1100 ? 'medium' : 'high';
+    }
+    return value < 1 ? 'low' : value <= 1.2 ? 'medium' : 'high';
+  }
+
+  getProductionMetricStatus(metric: ProductionMetric): string {
+    const labels: Record<CombustionLevel, string> = {
+      low: 'Bajo',
+      medium: 'Medio',
+      high: 'Alto'
+    };
+    return labels[this.getProductionMetricLevel(metric)];
+  }
+
+  getEnergyCostPercent(): number {
+    return Number(this.evaluationResults?.produccion?.costoEnergia) || 0;
+  }
+
+  getEfficiencyColor(): string {
+    const value = Number(this.evaluationResults?.eficiencia?.calorUtil?.percent) || 0;
+    if (value > 80) return '#21ad38';
+    if (value >= 70) return '#f7df25';
+    return '#ed1717';
+  }
+
+  getEfficiencyGaugeDasharray(): string {
+    const value = Number(this.evaluationResults?.eficiencia?.calorUtil?.percent) || 0;
+    const clamped = Math.min(Math.max(value, 0), 100);
+    return `${clamped} ${100 - clamped}`;
+  }
+
+  getEfficiencyEnergyValue(value: any): string {
+    const parsed = this.parseNumeric(value);
+    if (parsed === null || parsed === 777) return 'N/A';
+    if (this.resultsUnitSystem === 'USB') {
+      return parsed.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+    return String(this.displayResultValue(parsed, 'energy_flow'));
+  }
+
+  getEfficiencyLossRows(): EfficiencyLossRow[] {
+    const e = this.evaluationResults?.eficiencia;
+    if (!e) return [];
+    return [
+      { label: 'Chimenea', percent: Number(e.perdidasChimenea?.percent) || 0, energy: e.perdidasChimenea?.btu },
+      { label: 'Inquemados sólidos', percent: Number(e.perdidasInquemados?.percent) || 0, energy: e.perdidasInquemados?.btu },
+      { label: 'Inquemados gaseosos', percent: Number(e.perdidasInquemadosGas?.percent) || 0, energy: e.perdidasInquemadosGas?.btu },
+      { label: 'Paredes (Rad + Conv)', percent: Number(e.perdidasRC?.percent) || 0, energy: e.perdidasRC?.btu },
+      { label: 'Purgas', percent: Number(e.perdidasPurgas?.percent) || 0, energy: e.perdidasPurgas?.btu }
+    ];
+  }
+
+  getEfficiencyLossBarWidth(percent: number): number {
+    if (percent === 777) return 0;
+    return Math.min(Math.max(percent / 20 * 100, 0), 100);
+  }
+
+  getEfficiencyLossColor(percent: number): string {
+    if (percent === 777) return '#d1d5db';
+    if (percent < 5) return '#71c95c';
+    if (percent <= 15) return '#ffc342';
+    return '#ed1717';
+  }
+
+  getEfficiencyLossStatus(percent: number): string {
+    if (percent === 777) return 'N/A';
+    if (percent < 5) return 'Bajo';
+    if (percent <= 15) return 'Moderado';
+    return 'Alto';
+  }
+
+  getEfficiencyLossTotalPercent(): number {
+    return Number(this.evaluationResults?.eficiencia?.perdidasTotales?.percent) || 0;
+  }
+
+  getEfficiencyLossTotalEnergy(): number {
+    return this.parseNumeric(this.evaluationResults?.eficiencia?.perdidasTotales?.btu) || 0;
+  }
+
+  getEmissionRows(): EmissionRow[] {
+    const emi = this.evaluationResults?.emi;
+    if (!emi) return [];
+    return [
+      { symbol: 'CO₂', description: 'Bióxido de carbono', factor: Number(emi.R42) || 0, annual: Number(emi.R46) || 0 },
+      { symbol: 'CO', description: 'Monóxido de carbono', factor: Number(emi.R43) || 0, annual: Number(emi.R47) || 0 },
+      { symbol: 'Hollín', description: 'Partículas de carbono', factor: Number(emi.R44) || 0, annual: Number(emi.R48) || 0 },
+      { symbol: 'SO₂', description: 'Bióxido de azufre', factor: Number(emi.R45) || 0, annual: Number(emi.R49) || 0 }
+    ];
+  }
+
+  getDewTemperaturePosition(): number {
+    const value = Number(this.evaluationResults?.emi?.R50);
+    if (!Number.isFinite(value) || value === 777) return 0;
+    return Math.min(Math.max((value - 100) / 100 * 100, 0), 100);
+  }
+
+  getDewScaleLabel(celsius: number): string {
+    if (this.resultsUnitSystem === 'SI') {
+      return Math.round(celsius + 273.15).toString();
+    }
+    return celsius.toString();
+  }
+
+  getResultFuelLabel(): string {
+    const backendFuel = String(this.evaluationResults?.produccion?.combustible || '');
+    const labels: Record<string, string> = {
+      'Gas Natural (Camisea)': 'Gas Natural Camisea',
+      'Gas Natural (Talara)': 'Gas Natural Talara',
+      'P.I. 6': 'P.I.6',
+      'P.I. 500': 'P.I.500'
+    };
+    return labels[backendFuel] || backendFuel || 'N/A';
   }
 
   getEfiPieOffset(type: 'chimenea' | 'rc' | 'inq'): string {

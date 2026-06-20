@@ -1509,6 +1509,11 @@
 }
 
 /* Results section styles */
+.results-root {
+  max-width: 620px;
+  padding: 20px 28px 36px;
+}
+
 .results-header {
   display: flex;
   justify-content: space-between;
@@ -1585,6 +1590,1014 @@
   border-color: #397ecb;
 }
 
+.combustion-results {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.combustion-status-card,
+.combustion-air-card,
+.combustion-metric-card,
+.combustion-temperature-card {
+  background: #ffffff;
+  border: 1.5px solid #b7b7b7;
+  border-radius: 20px;
+}
+
+.combustion-status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px 18px 14px;
+}
+
+.combustion-status-copy {
+  min-width: 0;
+}
+
+.combustion-status-copy h3 {
+  margin: 0 0 2px;
+  color: #374151;
+  font-size: 23px;
+  line-height: 1.12;
+  font-weight: 500;
+}
+
+.combustion-status-copy h3 strong {
+  color: #0b3d86;
+  font-weight: 800;
+}
+
+.combustion-status-copy p {
+  margin: 0;
+  color: #777777;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.combustion-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  color: #72a6f8;
+}
+
+.combustion-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.combustion-icon svg path,
+.combustion-icon svg circle {
+  fill: currentColor;
+}
+
+.combustion-icon svg .combustion-icon-cutout {
+  fill: #ffffff;
+}
+
+.combustion-icon svg .combustion-icon-lines {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.combustion-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.combustion-card-heading h3 {
+  margin: 0;
+  color: #101010;
+  font-size: 16px;
+  line-height: 1.15;
+  font-weight: 500;
+}
+
+.combustion-air-card {
+  padding: 14px 18px 10px;
+}
+
+.combustion-air-content {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(240px, 1.35fr);
+  align-items: end;
+  gap: 14px;
+}
+
+.combustion-air-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 0 15px 12px;
+  color: #111111;
+  font-size: 13px;
+}
+
+.combustion-air-legend strong {
+  margin-bottom: 2px;
+  font-weight: 500;
+}
+
+.combustion-air-legend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+}
+
+.legend-high {
+  background: #e74b17;
+}
+
+.legend-optimal {
+  background: #8bd264;
+}
+
+.legend-low {
+  background: #f7e62f;
+}
+
+.combustion-gauge {
+  min-width: 0;
+  align-self: end;
+}
+
+.combustion-gauge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 185px;
+  overflow: visible;
+}
+
+.combustion-gauge-track,
+.combustion-gauge-value {
+  fill: none;
+  stroke-width: 38;
+  stroke-linecap: butt;
+}
+
+.combustion-gauge-track {
+  stroke: #ececef;
+}
+
+.combustion-gauge-value {
+  transition: stroke-dasharray 0.35s ease, stroke 0.2s ease;
+}
+
+.combustion-gauge-number {
+  fill: #063b88;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.combustion-gauge-unit {
+  font-size: 17px;
+}
+
+.combustion-gauge-min,
+.combustion-gauge-max {
+  fill: #111111;
+  font-size: 14px;
+}
+
+.combustion-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.combustion-metric-card {
+  min-height: 190px;
+  padding: 15px 16px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.combustion-metric-card .combustion-icon {
+  width: 31px;
+  height: 31px;
+  flex-basis: 31px;
+}
+
+.combustion-metric-value {
+  margin-top: 22px;
+  color: #063b88;
+  font-size: 37px;
+  line-height: 1;
+  font-weight: 800;
+  text-align: center;
+}
+
+.combustion-metric-value small {
+  margin-left: 3px;
+  font-size: 17px;
+}
+
+.combustion-metric-status {
+  margin-top: 10px;
+  color: #111111;
+  font-size: 17px;
+  text-align: center;
+}
+
+.combustion-level {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-top: auto;
+  padding-top: 17px;
+}
+
+.combustion-level i {
+  display: block;
+  height: 10px;
+  background: #ffffff;
+  border: 1px solid #e6e6e6;
+  border-radius: 999px;
+}
+
+.combustion-level-low i:nth-child(1) {
+  background: #5ca444;
+  border-color: #5ca444;
+}
+
+.combustion-level-medium i:nth-child(2) {
+  background: #f4e62f;
+  border-color: #f4e62f;
+}
+
+.combustion-level-high i:nth-child(3) {
+  background: #df7b1d;
+  border-color: #df7b1d;
+}
+
+.combustion-temperature-card {
+  padding: 17px 18px 22px;
+}
+
+.combustion-temperature-card .combustion-icon {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+}
+
+.combustion-temperature-value {
+  margin: 8px 0 21px 38px;
+  color: #063b88;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.combustion-temperature-value small {
+  font-size: 17px;
+}
+
+.combustion-temperature-scale {
+  padding: 0 20px 0 38px;
+}
+
+.temperature-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #252525;
+  font-size: 12px;
+}
+
+.temperature-track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #2376db 0%,
+    #85c2ff 33.33%,
+    #7fd84c 33.33%,
+    #7fd84c 66.66%,
+    #ff9a2d 66.66%,
+    #f00018 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.temperature-marker {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #1f2937;
+  border-radius: 50%;
+  background: #142335;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+.production-summary-card {
+  background: #ffffff;
+  border: 1.5px solid #b7b7b7;
+  border-radius: 20px;
+}
+
+.production-summary-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 17px 20px;
+}
+
+.production-summary-heading h3 {
+  color: #374151;
+  font-size: 23px;
+}
+
+.production-output-value {
+  margin: 12px 0 0 38px;
+  color: #063b88;
+  font-size: 37px;
+  line-height: 1;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.production-output-value small {
+  margin-left: 4px;
+  font-size: 16px;
+}
+
+.production-steam-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #111111;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.production-steam-details strong {
+  font-weight: 700;
+}
+
+.production-load-card {
+  padding-bottom: 10px;
+}
+
+.production-load-content {
+  grid-template-columns: minmax(160px, 0.8fr) minmax(240px, 1.35fr);
+}
+
+.production-load-legend {
+  gap: 7px;
+  padding: 14px 0 17px 20px;
+}
+
+.production-legend-high {
+  background: #8bd264;
+}
+
+.production-legend-medium {
+  background: #f7e62f;
+}
+
+.production-legend-low {
+  background: #ed1717;
+}
+
+.production-gauge {
+  margin-bottom: 0;
+}
+
+.production-metric-card {
+  min-width: 0;
+}
+
+.production-metric-value {
+  margin-top: 27px;
+  white-space: nowrap;
+}
+
+.production-metric-status {
+  margin-top: 12px;
+}
+
+.production-icon-cost svg .production-currency-mark {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.production-cost-detail {
+  margin-top: auto;
+  padding-top: 18px;
+  color: #111111;
+  font-size: 16px;
+  text-align: center;
+}
+
+.efficiency-gauge-card {
+  padding-bottom: 12px;
+}
+
+.efficiency-gauge-content {
+  grid-template-columns: minmax(155px, 0.75fr) minmax(250px, 1.35fr);
+}
+
+.efficiency-legend {
+  gap: 7px;
+  padding-bottom: 4px;
+}
+
+.efficiency-legend strong {
+  margin-top: 8px;
+  color: #063b88;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.efficiency-gauge {
+  margin-bottom: 0;
+}
+
+.efficiency-useful-energy {
+  margin: -2px 10px 0;
+  color: #111111;
+  font-size: 13px;
+  text-align: center;
+}
+
+.efficiency-losses-card,
+.efficiency-net-card {
+  background: #ffffff;
+  border: 1.5px solid #b7b7b7;
+  border-radius: 20px;
+}
+
+.efficiency-losses-card {
+  padding: 17px 20px 20px;
+}
+
+.efficiency-losses-heading {
+  margin-bottom: 18px;
+}
+
+.efficiency-loss-row {
+  margin-top: 18px;
+}
+
+.efficiency-loss-label {
+  margin-bottom: 4px;
+  color: #111111;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.efficiency-loss-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: start;
+  gap: 18px;
+}
+
+.efficiency-loss-track {
+  height: 11px;
+  overflow: hidden;
+  border: 1px solid #bdbdbd;
+  background: #ffffff;
+}
+
+.efficiency-loss-track i {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+}
+
+.efficiency-loss-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  color: #111111;
+  font-size: 11px;
+}
+
+.efficiency-loss-reading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-top: -14px;
+  white-space: nowrap;
+}
+
+.efficiency-loss-reading strong {
+  color: #063b88;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.efficiency-loss-reading span {
+  color: #111111;
+  font-size: 12px;
+}
+
+.efficiency-loss-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 24px 0 0 20px;
+  padding: 17px 0 0;
+  border-top: 1px solid #222222;
+  color: #063b88;
+}
+
+.efficiency-loss-total > span {
+  font-size: 18px;
+}
+
+.efficiency-loss-total > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.efficiency-loss-total strong {
+  font-size: 22px;
+}
+
+.efficiency-loss-total small {
+  color: #111111;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.efficiency-net-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 15px 36px;
+}
+
+.efficiency-net-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.efficiency-net-card > div:last-child {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.efficiency-net-card strong {
+  color: #063b88;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.efficiency-net-card span {
+  color: #111111;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.emissions-list-card,
+.emissions-dew-card {
+  background: #ffffff;
+  border: 1.5px solid #b7b7b7;
+  border-radius: 20px;
+}
+
+.emissions-list-card {
+  padding: 17px 20px 22px;
+}
+
+.emission-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 0.85fr);
+  align-items: center;
+  gap: 18px;
+  margin: 23px 20px 0 39px;
+}
+
+.emission-name,
+.emission-values {
+  display: flex;
+  flex-direction: column;
+}
+
+.emission-name {
+  gap: 3px;
+}
+
+.emission-name strong {
+  color: #111111;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.emission-name span {
+  color: #111111;
+  font-size: 13px;
+}
+
+.emission-values {
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+
+.emission-values strong {
+  color: #063b88;
+  font-size: 23px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.emission-values strong small {
+  margin-left: 3px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.emission-values span {
+  color: #111111;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.emissions-dew-card {
+  padding: 17px 20px 20px;
+}
+
+.emissions-dew-value {
+  margin: 8px 0 22px 39px;
+  color: #063b88;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.emissions-dew-value small {
+  margin-left: 5px;
+  font-size: 17px;
+}
+
+.emissions-dew-scale {
+  margin: 0 20px 0 18px;
+}
+
+.emissions-dew-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #252525;
+  font-size: 12px;
+}
+
+.emissions-dew-track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    #1769df 0%,
+    #8bc5ff 28%,
+    #6bd45a 48%,
+    #ff9826 68%,
+    #ed0017 100%);
+}
+
+.emissions-dew-track i {
+  position: absolute;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #1f2937;
+  border-radius: 50%;
+  background: #142335;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+.emissions-fuel {
+  margin: 25px 0 0 18px;
+  color: #111111;
+  font-size: 13px;
+}
+
+.results-root .results-data-table {
+  margin-bottom: 28px;
+}
+
+.results-save-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.results-save-area .results-save-btn {
+  width: min(100%, 260px);
+  min-height: 46px;
+  padding: 11px 20px;
+  border: 2px solid #397ecb;
+  border-radius: 10px;
+  background: #397ecb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.results-save-area .results-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .results-root {
+    padding: 16px 14px 28px;
+  }
+
+  .combustion-status-copy h3 {
+    font-size: 20px;
+  }
+
+  .combustion-air-content {
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .combustion-air-legend {
+    padding-left: 0;
+    font-size: 12px;
+  }
+
+  .combustion-gauge-number {
+    font-size: 30px;
+  }
+
+  .combustion-metrics-grid {
+    gap: 12px;
+  }
+
+  .combustion-metric-card {
+    min-height: 180px;
+    padding: 14px 12px;
+  }
+
+  .combustion-card-heading {
+    gap: 7px;
+  }
+
+  .combustion-card-heading h3 {
+    font-size: 14px;
+  }
+
+  .combustion-metric-value {
+    font-size: 32px;
+  }
+
+  .combustion-temperature-scale {
+    padding-right: 8px;
+  }
+
+  .production-summary-card {
+    grid-template-columns: minmax(0, 1fr) minmax(145px, 0.9fr);
+    gap: 10px;
+    padding: 15px 14px;
+  }
+
+  .production-output-value {
+    margin-left: 36px;
+    font-size: 30px;
+  }
+
+  .production-steam-details {
+    font-size: 12px;
+  }
+
+  .production-load-content {
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .production-load-legend {
+    padding-left: 0;
+    font-size: 12px;
+  }
+
+  .production-metric-card {
+    min-width: 0;
+  }
+
+  .production-metric-value {
+    font-size: 31px;
+  }
+
+  .production-metric-value small {
+    font-size: 13px;
+  }
+
+  .production-cost-detail {
+    font-size: 14px;
+  }
+
+  .efficiency-gauge-content {
+    grid-template-columns: 145px minmax(0, 1fr);
+  }
+
+  .efficiency-legend {
+    padding-left: 0;
+    font-size: 12px;
+  }
+
+  .efficiency-legend strong {
+    font-size: 16px;
+  }
+
+  .efficiency-losses-card {
+    padding: 16px 14px 18px;
+  }
+
+  .efficiency-loss-body {
+    grid-template-columns: minmax(0, 1fr) 116px;
+    gap: 10px;
+  }
+
+  .efficiency-loss-reading strong {
+    font-size: 19px;
+  }
+
+  .efficiency-loss-reading span {
+    font-size: 10px;
+  }
+
+  .efficiency-loss-total {
+    margin-left: 0;
+  }
+
+  .efficiency-net-card {
+    padding: 14px 22px;
+  }
+
+  .emission-row {
+    grid-template-columns: minmax(0, 1fr) minmax(145px, 0.8fr);
+    margin: 21px 5px 0 35px;
+  }
+
+  .emission-values strong {
+    font-size: 20px;
+  }
+
+  .emissions-dew-scale {
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+  .combustion-air-content {
+    grid-template-columns: 1fr;
+  }
+
+  .combustion-air-legend {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding-bottom: 0;
+  }
+
+  .combustion-gauge {
+    margin-top: -8px;
+  }
+
+  .production-summary-heading h3 {
+    font-size: 20px;
+  }
+
+  .production-output-value {
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .production-load-content {
+    grid-template-columns: 132px minmax(0, 1fr);
+  }
+
+  .production-load-legend {
+    font-size: 11px;
+  }
+
+  .production-metric-value {
+    font-size: 27px;
+  }
+
+  .efficiency-gauge-content {
+    grid-template-columns: 125px minmax(0, 1fr);
+  }
+
+  .efficiency-legend {
+    display: flex;
+    padding-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .efficiency-legend strong {
+    font-size: 14px;
+  }
+
+  .efficiency-useful-energy {
+    font-size: 10px;
+  }
+
+  .efficiency-loss-label {
+    font-size: 14px;
+  }
+
+  .efficiency-loss-body {
+    grid-template-columns: minmax(0, 1fr) 101px;
+    gap: 7px;
+  }
+
+  .efficiency-loss-reading strong {
+    font-size: 18px;
+  }
+
+  .efficiency-loss-total > span,
+  .efficiency-net-card strong {
+    font-size: 17px;
+  }
+
+  .efficiency-net-card {
+    padding: 13px 15px;
+  }
+
+  .efficiency-net-card span {
+    font-size: 11px;
+  }
+
+  .emissions-list-card,
+  .emissions-dew-card {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .emission-row {
+    grid-template-columns: minmax(0, 1fr) minmax(130px, 0.9fr);
+    gap: 8px;
+    margin: 20px 0 0 31px;
+  }
+
+  .emission-name strong {
+    font-size: 18px;
+  }
+
+  .emission-name span {
+    font-size: 11px;
+  }
+
+  .emission-values strong {
+    font-size: 18px;
+  }
+
+  .emission-values strong small,
+  .emission-values span {
+    font-size: 10px;
+  }
+
+  .emissions-dew-value {
+    margin-left: 31px;
+    font-size: 34px;
+  }
+
+  .emissions-dew-scale {
+    margin-left: 8px;
+  }
+
+  .emissions-fuel {
+    margin-left: 8px;
+  }
+
+}
+
 .results-data-table {
   margin-bottom: 180px;
 }
@@ -1644,171 +2657,6 @@
   font-size: 12px;
   min-width: 35px;
   text-align: right;
-}
-
-.charts-button-container {
-  display: flex;
-  justify-content: center;
-  margin: 28px 0;
-}
-
-.charts-btn {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  transition: all 0.2s;
-}
-
-.charts-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
-  transform: scale(1.05);
-}
-
-/* Sticky Footer Container for Charts Button and Navigation */
-.results-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  padding: 12px 16px 16px 16px;
-  border-top: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  z-index: 100;
-  max-width: 480px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.tab-chart-list {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 8px 4px;
-}
-
-.tab-chart-item {
-  display: grid;
-  grid-template-columns: 88px 1fr 58px;
-  gap: 10px;
-  align-items: center;
-}
-
-.tab-chart-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.tab-chart-bar-track {
-  height: 12px;
-  background: #e5e7eb;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.tab-chart-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-  border-radius: 999px;
-}
-
-.tab-chart-bar-fill.ben-fill {
-  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
-}
-
-.tab-chart-bar-fill.emi-fill {
-  background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
-}
-
-.tab-chart-value {
-  text-align: right;
-  font-size: 12px;
-  font-weight: 700;
-  color: #374151;
-}
-
-.results-footer-top {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.results-footer-bottom {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.results-actions-row .nav-btn {
-  flex: 1;
-  min-height: 44px;
-}
-
-.results-back-btn,
-.results-next-btn {
-  background: #ffffff;
-  color: #397ecb;
-  border: 2px solid #397ecb;
-}
-
-.results-save-btn {
-  background: #397ecb;
-  color: #ffffff;
-  border-color: #397ecb;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.results-save-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.results-save-label {
-  display: block;
-  width: 100%;
-  text-align: center;
-  line-height: 1.2;
-}
-
-/* Charts Button - Inside Sticky Footer */
-.charts-btn-fixed {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 20px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.charts-btn-fixed:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
-  transform: scale(1.1);
 }
 
 /* Temperatura screen styles */
