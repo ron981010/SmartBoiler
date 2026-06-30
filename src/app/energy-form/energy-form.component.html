@@ -742,8 +742,8 @@
           <text x="220" y="48" text-anchor="middle" font-size="11" font-weight="700" fill="#b71c1c">{{ getEmiSO2Comb() }}</text>
 
           <!-- Fuego (base) -->
-          <path d="M120 310 Q105 280 115 260 Q125 240 140 260 Q155 240 165 260 Q175 280 160 310 Z" fill="#f97316"/>
-          <path d="M128 310 Q118 290 126 275 Q134 260 140 275 Q146 260 154 275 Q162 290 152 310 Z" fill="#fbbf24"/>
+          <path d="M120 310 Q105 280 115 260 Q125 240 140 260 Q155 240 165 260 Q175 280 160 310 Z" fill="#ed1717"/>
+          <path d="M128 310 Q118 290 126 275 Q134 260 140 275 Q146 260 154 275 Q162 290 152 310 Z" fill="#f7e62f"/>
           <path d="M135 310 Q130 298 136 288 Q140 280 144 288 Q150 298 145 310 Z" fill="#fef08a"/>
 
           <!-- Arrow markers -->
@@ -821,8 +821,8 @@
   <div class="results-header">
     <h2>{{ activeResultsTab === 'COM' ? 'Combustión' : activeResultsTab === 'PRO' ? 'Producción' : activeResultsTab === 'EFI' ? 'Eficiencia' : activeResultsTab === 'BMS' ? 'B. Materia' : activeResultsTab === 'BEN' ? 'B. Energía' : 'Emisiones' }}</h2>
     <div class="results-header-buttons">
-      <button class="results-header-btn" [class.active]="isResultsUnitSystem('USB')" (click)="setResultsUnitSystem('USB')">USB</button>
-      <button class="results-header-btn" [class.active]="isResultsUnitSystem('LKS')" (click)="setResultsUnitSystem('LKS')">LKS</button>
+      <button class="results-header-btn" [class.active]="isResultsUnitSystem('USB')" (click)="setResultsUnitSystem('USB')">USS</button>
+      <button class="results-header-btn" [class.active]="isResultsUnitSystem('LKS')" (click)="setResultsUnitSystem('LKS')">MKS</button>
       <button class="results-header-btn" [class.active]="isResultsUnitSystem('SI')" (click)="setResultsUnitSystem('SI')">SI</button>
     </div>
   </div>
@@ -886,8 +886,8 @@
               {{ evaluationResults.com.R1B }}
               <tspan class="combustion-gauge-unit">%</tspan>
             </text>
-            <text class="combustion-gauge-min" x="38" y="157">0</text>
-            <text class="combustion-gauge-max" x="236" y="157">100</text>
+            <text class="combustion-gauge-min" x="30" y="158" text-anchor="middle">0</text>
+            <text class="combustion-gauge-max" x="250" y="158" text-anchor="middle">100</text>
           </svg>
         </div>
       </div>
@@ -1011,7 +1011,7 @@
         <span><strong>Vapor:</strong> {{ getSteamTypeLabel() }}</span>
         <span><strong>Presión:</strong> {{ getProductionPressureValue() }} {{ getProductionPressureUnit() }}</span>
         <span><strong>Temperatura:</strong> {{ displayResultValue(getSteamTemperatureC(), 'temp_c') }} {{ getResultsUnit('temp_c', '°C') }}</span>
-        <span><strong>Calor:</strong> {{ displayResultValue(getSteamHeatValue(), 'energy_specific') }} {{ getResultsUnit('energy_specific', 'kcal/kg') }}</span>
+        <span><strong>CVL:</strong> {{ displayResultValue(getSteamHeatValue(), 'energy_specific') }} {{ getResultsUnit('energy_specific', 'kcal/kg') }}</span>
       </div>
     </section>
 
@@ -1043,8 +1043,8 @@
               {{ evaluationResults.carga.factorCarga }}
               <tspan class="combustion-gauge-unit">%</tspan>
             </text>
-            <text class="combustion-gauge-min" x="38" y="157">0</text>
-            <text class="combustion-gauge-max" x="236" y="157">100</text>
+            <text class="combustion-gauge-min" x="30" y="158" text-anchor="middle">0</text>
+            <text class="combustion-gauge-max" x="250" y="158" text-anchor="middle">100</text>
           </svg>
         </div>
       </div>
@@ -1118,7 +1118,7 @@
           <h3>Costo de Vapor</h3>
         </div>
         <div class="combustion-metric-value production-metric-value">
-          {{ displayResultValue(evaluationResults.ratios.costoVapor, 'cost_mass') }}
+          {{ getSteamCostValue() }}
           <small>{{ getResultsUnit('cost_mass', 'US$/t') }}</small>
         </div>
         <div class="production-cost-detail">Energía: {{ getEnergyCostPercent() }}%</div>
@@ -1144,7 +1144,7 @@
           <span><i class="legend-swatch production-legend-high"></i>Alta: &gt; 80%</span>
           <span><i class="legend-swatch production-legend-medium"></i>Media: 70 - 80%</span>
           <span><i class="legend-swatch production-legend-low"></i>Baja: &lt; 70%</span>
-          <strong>Energía útil</strong>
+          <span class="efficiency-legend-title">Energía útil</span>
         </div>
 
         <div class="combustion-gauge efficiency-gauge">
@@ -1157,8 +1157,8 @@
               {{ evaluationResults.eficiencia.calorUtil.percent }}
               <tspan class="combustion-gauge-unit">%</tspan>
             </text>
-            <text class="combustion-gauge-min" x="38" y="157">0</text>
-            <text class="combustion-gauge-max" x="236" y="157">100</text>
+            <text class="combustion-gauge-min" x="30" y="158" text-anchor="middle">0</text>
+            <text class="combustion-gauge-max" x="250" y="158" text-anchor="middle">100</text>
           </svg>
           <div class="efficiency-useful-energy">
             {{ getEfficiencyEnergyValue(evaluationResults.eficiencia.calorUtil.btu) }}
@@ -1221,159 +1221,211 @@
     </section>
   </div>
 
+  <ng-template #balanceIcon let-row>
+    <span *ngIf="row.icon" class="balance-row-icon" [ngClass]="'balance-icon-' + row.icon">
+      <ng-container [ngSwitch]="row.icon">
+        <svg *ngSwitchCase="'flame'" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M18.4 2.8c1.2 5.7-3 7.7-4.8 11.1-1.4-1.8-1.7-3.8-1.2-6C7.8 11.9 5 16 5 20.6 5 27 9.9 31 16 31s11-4 11-10.4c0-4.4-2.6-8.6-8.6-12.8.5 3.4-.2 5.8-2.2 7.7-.1-4.6 4.1-7 2.2-12.7Z"/>
+          <path class="balance-icon-cutout" d="M16.1 19.2c2.1 2 3.2 3.7 3.2 5.3 0 2-1.4 3.4-3.3 3.4s-3.3-1.4-3.3-3.4c0-1.7 1.1-3.5 3.4-5.3Z"/>
+        </svg>
+        <svg *ngSwitchCase="'flame-outline'" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M18.4 2.8c1.2 5.7-3 7.7-4.8 11.1-1.4-1.8-1.7-3.8-1.2-6C7.8 11.9 5 16 5 20.6 5 27 9.9 31 16 31s11-4 11-10.4c0-4.4-2.6-8.6-8.6-12.8.5 3.4-.2 5.8-2.2 7.7-.1-4.6 4.1-7 2.2-12.7Z"/>
+          <path class="balance-icon-cutout" d="M16.1 19.2c2.1 2 3.2 3.7 3.2 5.3 0 2-1.4 3.4-3.3 3.4s-3.3-1.4-3.3-3.4c0-1.7 1.1-3.5 3.4-5.3Z"/>
+        </svg>
+        <svg *ngSwitchCase="'heat'" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M14 4h4v14.7a6 6 0 1 1-4 0V4Z"/>
+          <path d="M9 24c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0 2.7-1 4 0M9 28c1.3 1 2.7 1 4 0s2.7-1 4 0 2.7 1 4 0 2.7-1 4 0"/>
+        </svg>
+        <svg *ngSwitchCase="'water'" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 2C10.8 8.5 6.5 13.8 6.5 20.1a9.5 9.5 0 0 0 19 0C25.5 13.8 21.2 8.5 16 2Z"/>
+          <path d="M12 23.1c1.5 1.8 3.5 2.4 6 1.8"/>
+        </svg>
+        <svg *ngSwitchCase="'fan'" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="3.1"/>
+          <path d="M16 12.7C13.7 8.4 14.8 3.1 18 2.3c3.1-.8 5.3 2.2 4.5 5.1-.8 2.7-3.5 4.5-6.5 5.3ZM19.3 16c4.3-2.3 9.6-1.2 10.4 2 .8 3.1-2.2 5.3-5.1 4.5-2.7-.8-4.5-3.5-5.3-6.5ZM16 19.3c2.3 4.3 1.2 9.6-2 10.4-3.1.8-5.3-2.2-4.5-5.1.8-2.7 3.5-4.5 6.5-5.3ZM12.7 16C8.4 18.3 3.1 17.2 2.3 14c-.8-3.1 2.2-5.3 5.1-4.5 2.7.8 4.5 3.5 5.3 6.5Z"/>
+        </svg>
+        <svg *ngSwitchCase="'steam'" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M6.5 18.2a6 6 0 0 1 8.8-5.3 6.2 6.2 0 0 1 11.2 3.6 4.8 4.8 0 0 1-.6 9.6H8.4a4.2 4.2 0 0 1-1.9-7.9Z"/>
+          <path d="M10 25.5v4M16 25.5v4M22 25.5v4"/>
+        </svg>
+        <svg *ngSwitchCase="'solids'" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="7" r="6"/>
+          <circle cx="9" cy="21" r="6"/>
+          <circle cx="23" cy="21" r="6"/>
+        </svg>
+        <svg *ngSwitchCase="'waves'" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M8 4c4 4.5 4 8.5 0 13s-4 8.5 0 13M16 4c4 4.5 4 8.5 0 13s-4 8.5 0 13M24 4c4 4.5 4 8.5 0 13s-4 8.5 0 13"/>
+        </svg>
+        <svg *ngSwitchCase="'radiation'" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="13"/>
+          <path d="M9 15c1.2-2 2.5-2 3.7 0s2.5 2 3.7 0 2.5-2 3.7 0 2.5 2 3.7 0M9 21c1.2-2 2.5-2 3.7 0s2.5 2 3.7 0 2.5-2 3.7 0 2.5 2 3.7 0"/>
+        </svg>
+        <span *ngSwitchDefault>{{ row.symbol }}</span>
+      </ng-container>
+    </span>
+  </ng-template>
+
+  <ng-template #balanceScaleIcon>
+    <svg class="balance-summary-svg" viewBox="0 0 48 48" aria-hidden="true">
+      <path class="balance-scale-top" d="M5 6h38c0 7-8 10-19 10S5 13 5 6Z"/>
+      <path class="balance-scale-base" d="M24 16v9M10 42c0-9 6.3-17 14-17s14 8 14 17"/>
+      <path class="balance-scale-left-foot" d="M10 42h10"/>
+      <path class="balance-scale-right-foot" d="M28 42h10"/>
+      <path class="balance-scale-needle" d="M24 38l12-13"/>
+      <circle class="balance-scale-hub" cx="24" cy="38" r="3.5"/>
+    </svg>
+  </ng-template>
+
   <!-- Vista BMS - Balance de Materia -->
-  <div *ngIf="activeResultsTab === 'BMS'" class="results-data-table">
-    <div class="efficiency-header">
-      <span class="header-label"> Entradas</span>
-      <span class="header-code">{{getResultsUnit('mass_flow', 'kg/h')}}</span>
-      <span class="header-percent">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Combustible</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.combustible.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.entradas.combustible.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Agua (alimentación)</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.aguaAlimentacion.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.entradas.aguaAlimentacion.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Aire (combustión)</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.aireCombustion.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.entradas.aireCombustion.percent}}</span>
-    </div>
-    <div class="data-row total-row">
-      <span class="row-label">Total</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.entradas.total.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.entradas.total.percent}}</span>
-    </div>
-    <h3 class="section-divider">Salidas</h3>
-    <div class="data-row">
-      <span class="row-label">Vapor (Production)</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.produccionVapor.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.produccionVapor.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Purgas de agua</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.purgasAgua.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.purgasAgua.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Bióxido de carbono</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.co2.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.co2.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Monóxido de carbono</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.co.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.co.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Oxígeno</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.o2.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.o2.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Nitrógeno</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.n2.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.n2.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Agua</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.h2o.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.h2o.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Bióxido de azufre</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.so2.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.so2.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Holín</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.hollin.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.hollin.percent}}</span>
-    </div>
-    <div class="data-row total-row">
-      <span class="row-label">Total</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.bms.salidas.total.val, 'mass_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.bms.salidas.total.percent}}</span>
-    </div>
+  <div *ngIf="activeResultsTab === 'BMS'" class="balance-report">
+    <section class="balance-table">
+      <div class="balance-section-header">
+        <span>Entradas</span>
+        <span>{{ getResultsUnit('mass_flow', 'kg/h') }}</span>
+        <span>%</span>
+      </div>
+
+      <div class="balance-row" *ngFor="let row of getMatterBalanceEntries()" [class.balance-row-total]="row.total">
+        <div class="balance-row-label">
+          <ng-container *ngTemplateOutlet="balanceIcon; context: { $implicit: row }"></ng-container>
+          <span>{{ row.label }}</span>
+        </div>
+        <span class="balance-row-value">{{ formatBalanceValue(row.value, 'mass_flow') }}</span>
+        <span class="balance-row-percent">{{ formatBalancePercent(row.percent, row.total) }}</span>
+      </div>
+
+      <div class="balance-section-header balance-section-header-out">
+        <span>Salidas</span>
+        <span>{{ getResultsUnit('mass_flow', 'kg/h') }}</span>
+        <span>%</span>
+      </div>
+
+      <div class="balance-row" *ngFor="let row of getMatterBalanceOutputs()" [class.balance-row-total]="row.total">
+        <div class="balance-row-label">
+          <ng-container *ngTemplateOutlet="balanceIcon; context: { $implicit: row }"></ng-container>
+          <span>{{ row.label }}</span>
+        </div>
+        <span class="balance-row-value">{{ formatBalanceValue(row.value, 'mass_flow') }}</span>
+        <span class="balance-row-percent">{{ formatBalancePercent(row.percent, row.total) }}</span>
+      </div>
+    </section>
+
+    <section class="balance-summary-card">
+      <div class="balance-summary-icon" aria-hidden="true">
+        <ng-container *ngTemplateOutlet="balanceScaleIcon"></ng-container>
+      </div>
+      <div class="balance-summary-copy">
+        <strong>Balance</strong>
+        <span>Entradas - Salidas</span>
+      </div>
+      <strong class="balance-summary-formula">R18-R28</strong>
+      <span class="balance-summary-value">{{ getMassBalanceDifference() }}</span>
+    </section>
+
+    <section class="balance-chart-card">
+      <h3>Balance de masa</h3>
+      <p>(kg/kg combustible)</p>
+
+      <svg class="balance-svg" [attr.viewBox]="'0 0 720 ' + getBalanceChartHeight('BMS')" role="img" aria-label="Gráfica de balance de masa">
+        <text x="180" y="20" class="balance-chart-side-title" text-anchor="middle">Entradas</text>
+        <text x="540" y="20" class="balance-chart-side-title" text-anchor="middle">Salidas</text>
+        <rect class="balance-chart-frame" x="10" y="30" width="700" [attr.height]="getBalanceChartAxisBottom('BMS') - 30"></rect>
+
+        <ng-container *ngFor="let tick of getBalanceChartTicks('BMS')">
+          <line class="balance-chart-grid" [attr.x1]="tick.x" y1="34" [attr.x2]="tick.x" [attr.y2]="getBalanceChartAxisBottom('BMS')"></line>
+          <text class="balance-chart-tick" [attr.x]="tick.x" [attr.y]="getBalanceChartHeight('BMS') - 10" text-anchor="middle">{{ tick.label }}</text>
+        </ng-container>
+
+        <line class="balance-chart-axis" x1="240" [attr.y1]="getBalanceChartAxisBottom('BMS')" x2="480" [attr.y2]="getBalanceChartAxisBottom('BMS')"></line>
+        <line class="balance-chart-center" x1="360" y1="34" x2="360" [attr.y2]="getBalanceChartAxisBottom('BMS')"></line>
+
+        <ng-container *ngFor="let row of getBalanceChartRows('BMS')">
+          <rect [class.balance-bar-input]="row.section === 'in'" [class.balance-bar-output]="row.section === 'out'"
+            [attr.x]="row.x" [attr.y]="row.y - 7" [attr.width]="row.width" height="14"></rect>
+          <text class="balance-chart-label" [attr.x]="row.section === 'in' ? 220 : 500" [attr.y]="row.y + 4"
+            [attr.text-anchor]="row.section === 'in' ? 'end' : 'start'">{{ row.label }}</text>
+          <text class="balance-chart-value" [class.balance-chart-value-in]="row.section === 'in'" [class.balance-chart-value-out]="row.section === 'out'"
+            [attr.x]="row.valueX" [attr.y]="row.y + 4"
+            [attr.text-anchor]="row.section === 'in' ? 'end' : 'start'">{{ row.displayValue }}</text>
+        </ng-container>
+      </svg>
+    </section>
   </div>
 
   <!-- Vista BEN - Balance de Energía -->
-  <div *ngIf="activeResultsTab === 'BEN'" class="results-data-table">
-    <div class="efficiency-header">
-      <span class="header-label"> Entradas</span>
-      <span class="header-code">{{getResultsUnit('energy_flow', 'kcal/h')}}</span>
-      <span class="header-percent">%</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Calor de combustión</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R29.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.entradas.R29.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Calor sensible combustible</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R30.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.entradas.R30.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Calor sensible aire seco</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R31.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.entradas.R31.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Calor humedad del aire</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R32.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.entradas.R32.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Calor agua de alimentación</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R33.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.entradas.R33.percent}}</span>
-    </div>
-    <div class="data-row total-row">
-      <span class="row-label">Total</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.entradas.R34.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.entradas.R34.percent}}</span>
-    </div>
-    <h3 class="section-divider">Salidas</h3>
-    <div class="data-row">
-      <span class="row-label">Calor vapor generado</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R35.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R35.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Pérd. calor sensible chimenea</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R36.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R36.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Pérd. inquemados sólidos</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R37.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R37.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Pérd. inquemados gaseosos</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R38.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R38.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Pérd. Radiación + Convección</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R39.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R39.percent}}</span>
-    </div>
-    <div class="data-row">
-      <span class="row-label">Calor purgas</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R40.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R40.percent}}</span>
-    </div>
-    <div class="data-row total-row">
-      <span class="row-label">Total</span>
-      <span class="data-input">{{displayResultValue(evaluationResults.ben.salidas.R41.val, 'energy_flow')}}</span>
-      <span class="data-unit">{{evaluationResults.ben.salidas.R41.percent}}</span>
-    </div>
+  <div *ngIf="activeResultsTab === 'BEN'" class="balance-report">
+    <section class="balance-table">
+      <div class="balance-section-header">
+        <span>Entradas</span>
+        <span>{{ getResultsUnit('energy_flow', 'kcal/h') }}</span>
+        <span>%</span>
+      </div>
+
+      <div class="balance-row" *ngFor="let row of getEnergyBalanceEntries()" [class.balance-row-total]="row.total">
+        <div class="balance-row-label">
+          <ng-container *ngTemplateOutlet="balanceIcon; context: { $implicit: row }"></ng-container>
+          <span>{{ row.label }}</span>
+        </div>
+        <span class="balance-row-value">{{ formatBalanceValue(row.value, 'energy_flow') }}</span>
+        <span class="balance-row-percent">{{ formatBalancePercent(row.percent, row.total) }}</span>
+      </div>
+
+      <div class="balance-section-header balance-section-header-out">
+        <span>Salidas</span>
+        <span>{{ getResultsUnit('energy_flow', 'kcal/h') }}</span>
+        <span>%</span>
+      </div>
+
+      <div class="balance-row" *ngFor="let row of getEnergyBalanceOutputs()" [class.balance-row-total]="row.total" [class.balance-row-indent]="row.indent">
+        <div class="balance-row-label">
+          <ng-container *ngTemplateOutlet="balanceIcon; context: { $implicit: row }"></ng-container>
+          <span>{{ row.label }}</span>
+        </div>
+        <span class="balance-row-value">{{ formatBalanceValue(row.value, 'energy_flow') }}</span>
+        <span class="balance-row-percent">{{ formatBalancePercent(row.percent, row.total) }}</span>
+      </div>
+    </section>
+
+    <section class="balance-summary-card">
+      <div class="balance-summary-icon" aria-hidden="true">
+        <ng-container *ngTemplateOutlet="balanceScaleIcon"></ng-container>
+      </div>
+      <div class="balance-summary-copy">
+        <strong>Balance</strong>
+        <span>Entradas - Salidas</span>
+      </div>
+      <strong class="balance-summary-formula">R34-R41</strong>
+      <span class="balance-summary-value">{{ getEnergyBalanceDifference() }}</span>
+    </section>
+
+    <section class="balance-chart-card">
+      <h3>Balance de energía</h3>
+      <p>(kcal/kcal combustión)</p>
+
+      <svg class="balance-svg" [attr.viewBox]="'0 0 720 ' + getBalanceChartHeight('BEN')" role="img" aria-label="Gráfica de balance de energía">
+        <text x="180" y="20" class="balance-chart-side-title" text-anchor="middle">Entradas</text>
+        <text x="540" y="20" class="balance-chart-side-title" text-anchor="middle">Salidas</text>
+        <rect class="balance-chart-frame" x="10" y="30" width="700" [attr.height]="getBalanceChartAxisBottom('BEN') - 30"></rect>
+
+        <ng-container *ngFor="let tick of getBalanceChartTicks('BEN')">
+          <line class="balance-chart-grid" [attr.x1]="tick.x" y1="34" [attr.x2]="tick.x" [attr.y2]="getBalanceChartAxisBottom('BEN')"></line>
+          <text class="balance-chart-tick" [attr.x]="tick.x" [attr.y]="getBalanceChartHeight('BEN') - 10" text-anchor="middle">{{ tick.label }}</text>
+        </ng-container>
+
+        <line class="balance-chart-axis" x1="240" [attr.y1]="getBalanceChartAxisBottom('BEN')" x2="480" [attr.y2]="getBalanceChartAxisBottom('BEN')"></line>
+        <line class="balance-chart-center" x1="360" y1="34" x2="360" [attr.y2]="getBalanceChartAxisBottom('BEN')"></line>
+
+        <ng-container *ngFor="let row of getBalanceChartRows('BEN')">
+          <rect [class.balance-bar-input]="row.section === 'in'" [class.balance-bar-output]="row.section === 'out'"
+            [attr.x]="row.x" [attr.y]="row.y - 7" [attr.width]="row.width" height="14"></rect>
+          <text class="balance-chart-label" [attr.x]="row.section === 'in' ? 220 : 500" [attr.y]="row.y + 4"
+            [attr.text-anchor]="row.section === 'in' ? 'end' : 'start'">{{ row.label }}</text>
+          <text class="balance-chart-value" [class.balance-chart-value-in]="row.section === 'in'" [class.balance-chart-value-out]="row.section === 'out'"
+            [attr.x]="row.valueX" [attr.y]="row.y + 4"
+            [attr.text-anchor]="row.section === 'in' ? 'end' : 'start'">{{ row.displayValue }}</text>
+        </ng-container>
+      </svg>
+    </section>
   </div>
 
   <!-- Vista EMI - Emisiones -->

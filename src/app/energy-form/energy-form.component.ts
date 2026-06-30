@@ -26,6 +26,30 @@ interface EmissionRow {
   factor: number;
   annual: number;
 }
+interface BalanceTableRow {
+  label: string;
+  value: any;
+  percent: any;
+  icon?: string;
+  symbol?: string;
+  total?: boolean;
+  indent?: boolean;
+}
+interface BalanceChartRow {
+  label: string;
+  value: number;
+  displayValue: string;
+  section: 'in' | 'out';
+  x: number;
+  y: number;
+  width: number;
+  valueX: number;
+}
+interface BalanceChartTick {
+  value: number;
+  label: string;
+  x: number;
+}
 
 interface FieldConfig {
   id: string;
@@ -48,6 +72,9 @@ interface FieldConfig {
 export class EnergyFormComponent implements OnInit {
   private readonly DEFAULT_OPERATION_HOURS = 7920;
   private readonly DEFAULT_COST_VALUES = [8.0, 3.0, 2.0, 1.3, 1.0, 6.0, 78.7];
+  private readonly STATUS_RED = '#ed1717';
+  private readonly STATUS_GREEN = '#8bd264';
+  private readonly STATUS_YELLOW = '#f7e62f';
 
   fields: FieldConfig[] = [];
   selectedCombustible: FormControl<Combustible | null> = new FormControl<Combustible | null>('Diesel');
@@ -980,9 +1007,9 @@ export class EnergyFormComponent implements OnInit {
   getExcessAirColor(): string {
     const value = Number(this.evaluationResults?.com?.R1B) || 0;
     const limits = this.getExcessAirLimits();
-    if (value < limits.min) return '#f7e62f';
-    if (value <= limits.max) return '#8bd264';
-    return '#ff4d00';
+    if (value < limits.min) return this.STATUS_YELLOW;
+    if (value <= limits.max) return this.STATUS_GREEN;
+    return this.STATUS_RED;
   }
 
   getCombustionGaugeDasharray(): string {
@@ -1045,6 +1072,20 @@ export class EnergyFormComponent implements OnInit {
     return Number(this.evaluationResults?.produccion?.calorVapor) || 0;
   }
 
+  getSteamCostValue(): string {
+    const rawValue = this.evaluationResults?.ratios?.costoVapor;
+    const parsed = this.parseNumeric(rawValue);
+    if (parsed === null) {
+      return rawValue === null || rawValue === undefined ? 'N/A' : String(rawValue);
+    }
+
+    const value = this.resultsUnitSystem === 'SI' ? parsed / 1000 : parsed;
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
+  }
+
   getProductionPressureValue(): string {
     const pressurePsi = Number(this.evaluationResults?.produccion?.presionVapor) || 0;
     const value = this.resultsUnitSystem === 'LKS'
@@ -1063,9 +1104,9 @@ export class EnergyFormComponent implements OnInit {
 
   getProductionLoadColor(): string {
     const value = Number(this.evaluationResults?.carga?.factorCarga) || 0;
-    if (value > 70) return '#8bd264';
-    if (value >= 40) return '#ffd000';
-    return '#ed1717';
+    if (value > 70) return this.STATUS_GREEN;
+    if (value >= 40) return this.STATUS_YELLOW;
+    return this.STATUS_RED;
   }
 
   getProductionLoadGaugeDasharray(): string {
@@ -1107,9 +1148,9 @@ export class EnergyFormComponent implements OnInit {
 
   getEfficiencyColor(): string {
     const value = Number(this.evaluationResults?.eficiencia?.calorUtil?.percent) || 0;
-    if (value > 80) return '#21ad38';
-    if (value >= 70) return '#f7df25';
-    return '#ed1717';
+    if (value > 80) return this.STATUS_GREEN;
+    if (value >= 70) return this.STATUS_YELLOW;
+    return this.STATUS_RED;
   }
 
   getEfficiencyGaugeDasharray(): string {
@@ -1146,9 +1187,9 @@ export class EnergyFormComponent implements OnInit {
 
   getEfficiencyLossColor(percent: number): string {
     if (percent === 777) return '#d1d5db';
-    if (percent < 5) return '#71c95c';
-    if (percent <= 15) return '#ffc342';
-    return '#ed1717';
+    if (percent < 5) return this.STATUS_GREEN;
+    if (percent <= 15) return this.STATUS_YELLOW;
+    return this.STATUS_RED;
   }
 
   getEfficiencyLossStatus(percent: number): string {
@@ -1341,6 +1382,226 @@ export class EnergyFormComponent implements OnInit {
     });
   }
 
+  getMatterBalanceEntries(): BalanceTableRow[] {
+    const entradas = this.evaluationResults?.bms?.entradas;
+    if (!entradas) return [];
+
+    return [
+      { icon: 'flame', label: 'Combustible', value: entradas.combustible?.val, percent: entradas.combustible?.percent },
+      { icon: 'water', label: 'Agua de alimentación', value: entradas.aguaAlimentacion?.val, percent: entradas.aguaAlimentacion?.percent },
+      { icon: 'fan', label: 'Aire de combustión', value: entradas.aireCombustion?.val, percent: entradas.aireCombustion?.percent },
+      { label: 'Total entradas', value: entradas.total?.val, percent: entradas.total?.percent, total: true }
+    ];
+  }
+
+  getMatterBalanceOutputs(): BalanceTableRow[] {
+    const salidas = this.evaluationResults?.bms?.salidas;
+    if (!salidas) return [];
+
+    return [
+      { icon: 'steam', label: 'Vapor (Producción)', value: salidas.produccionVapor?.val, percent: salidas.produccionVapor?.percent },
+      { icon: 'water', label: 'Purgas de agua', value: salidas.purgasAgua?.val, percent: salidas.purgasAgua?.percent },
+      { icon: 'gas-green', symbol: 'CO₂', label: 'Bióxido de carbono', value: salidas.co2?.val, percent: salidas.co2?.percent },
+      { icon: 'gas-gray', symbol: 'CO', label: 'Monóxido de carbono', value: salidas.co?.val, percent: salidas.co?.percent },
+      { icon: 'gas-blue', symbol: 'O₂', label: 'Oxígeno', value: salidas.o2?.val, percent: salidas.o2?.percent },
+      { icon: 'gas-lime', symbol: 'N₂', label: 'Nitrógeno', value: salidas.n2?.val, percent: salidas.n2?.percent },
+      { icon: 'water', label: 'Agua', value: salidas.h2o?.val, percent: salidas.h2o?.percent },
+      { icon: 'gas-red', symbol: 'SO₂', label: 'Bióxido de azufre', value: salidas.so2?.val, percent: salidas.so2?.percent },
+      { icon: 'gas-black', symbol: 'H', label: 'Hollín', value: salidas.hollin?.val, percent: salidas.hollin?.percent },
+      { label: 'Total salidas', value: salidas.total?.val, percent: salidas.total?.percent, total: true }
+    ];
+  }
+
+  getEnergyBalanceEntries(): BalanceTableRow[] {
+    const entradas = this.evaluationResults?.ben?.entradas;
+    if (!entradas) return [];
+
+    return [
+      { icon: 'flame-outline', label: 'Calor de combustión', value: entradas.R29?.val, percent: entradas.R29?.percent },
+      { icon: 'heat', label: 'Combustible', value: entradas.R30?.val, percent: entradas.R30?.percent },
+      { icon: 'fan', label: 'Aire seco', value: entradas.R31?.val, percent: entradas.R31?.percent },
+      { icon: 'water', label: 'Humedad del aire', value: entradas.R32?.val, percent: entradas.R32?.percent },
+      { icon: 'water', label: 'Agua de alimentación', value: entradas.R33?.val, percent: entradas.R33?.percent },
+      { label: 'Total entradas', value: entradas.R34?.val, percent: entradas.R34?.percent, total: true }
+    ];
+  }
+
+  getEnergyBalanceOutputs(): BalanceTableRow[] {
+    const salidas = this.evaluationResults?.ben?.salidas;
+    if (!salidas) return [];
+
+    return [
+      { icon: 'steam', label: 'Calor vapor (generado)', value: salidas.R35?.val, percent: salidas.R35?.percent },
+      { label: 'Gases de chimenea', value: salidas.R36?.val, percent: salidas.R36?.percent, indent: true },
+      { icon: 'solids', label: 'Inquemados sólidos', value: salidas.R37?.val, percent: salidas.R37?.percent },
+      { icon: 'waves', label: 'Inquemados gaseosos', value: salidas.R38?.val, percent: salidas.R38?.percent },
+      { icon: 'radiation', label: 'Radiación + Convección', value: salidas.R39?.val, percent: salidas.R39?.percent },
+      { icon: 'water', label: 'Purgas', value: salidas.R40?.val, percent: salidas.R40?.percent },
+      { label: 'Total salidas', value: salidas.R41?.val, percent: salidas.R41?.percent, total: true }
+    ];
+  }
+
+  formatBalanceValue(value: any, quantity: ResultsQuantity): string {
+    const displayed = this.displayResultValue(value, quantity);
+    const parsed = this.parseNumeric(displayed);
+    if (parsed === null) {
+      return displayed === null || displayed === undefined || displayed === '' ? '0' : String(displayed);
+    }
+
+    return parsed.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }
+
+  formatBalancePercent(value: any, forceDecimals = false): string {
+    if (value === null || value === undefined || value === '') return '0';
+    if (String(value) === '777') return 'N/A';
+
+    const parsed = this.parseNumeric(value);
+    if (parsed === null) return String(value);
+
+    return parsed.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }
+
+  getMassBalanceDifference(): string {
+    return this.getBalanceDifference(
+      this.evaluationResults?.bms?.entradas?.total?.val,
+      this.evaluationResults?.bms?.salidas?.total?.val,
+      'mass_flow'
+    );
+  }
+
+  getEnergyBalanceDifference(): string {
+    return this.getBalanceDifference(
+      this.evaluationResults?.ben?.entradas?.R34?.val,
+      this.evaluationResults?.ben?.salidas?.R41?.val,
+      'energy_flow'
+    );
+  }
+
+  private getBalanceDifference(inputValue: any, outputValue: any, quantity: ResultsQuantity): string {
+    const input = this.parseNumeric(inputValue) || 0;
+    const output = this.parseNumeric(outputValue) || 0;
+    return this.formatBalanceValue(input - output, quantity);
+  }
+
+  getBalanceChartRows(kind: 'BMS' | 'BEN'): BalanceChartRow[] {
+    const rows = this.getBalanceChartRawRows(kind);
+    const axisMax = this.getBalanceChartAxisLimit(kind);
+    const center = 360;
+    const drawableHalfWidth = 118;
+    const inputBarEnd = center;
+    const outputBarStart = center;
+
+    return rows.map((row, index) => {
+      const abs = Math.abs(row.value);
+      const width = abs === 0 ? 0 : Math.max(2, Math.min(drawableHalfWidth, abs / axisMax * drawableHalfWidth));
+      const isInput = row.section === 'in';
+
+      return {
+        ...row,
+        x: isInput ? inputBarEnd - width : outputBarStart,
+        y: 55 + index * 24,
+        width,
+        valueX: isInput
+          ? inputBarEnd - width - 8
+          : outputBarStart + width + 8,
+        displayValue: this.formatBalanceChartNumber(row.value)
+      };
+    });
+  }
+
+  getBalanceChartTicks(kind: 'BMS' | 'BEN'): BalanceChartTick[] {
+    const axisMax = this.getBalanceChartAxisLimit(kind);
+    const center = 360;
+    const halfWidth = 120;
+    const values = [-axisMax, -axisMax / 2, 0, axisMax / 2, axisMax];
+
+    return values.map(value => ({
+      value,
+      label: this.formatBalanceAxisLabel(value),
+      x: center + (value / axisMax) * halfWidth
+    }));
+  }
+
+  getBalanceChartHeight(kind: 'BMS' | 'BEN'): number {
+    return 100 + this.getBalanceChartRawRows(kind).length * 24;
+  }
+
+  getBalanceChartAxisBottom(kind: 'BMS' | 'BEN'): number {
+    return this.getBalanceChartHeight(kind) - 32;
+  }
+
+  private getBalanceChartRawRows(kind: 'BMS' | 'BEN'): Array<{ label: string; value: number; section: 'in' | 'out' }> {
+    if (kind === 'BMS') {
+      const entradas = this.evaluationResults?.bms?.entradas;
+      const salidas = this.evaluationResults?.bms?.salidas;
+      const combustible = this.safeBalanceDenominator(entradas?.combustible?.val);
+
+      return [
+        { label: 'Combustible', value: this.balanceChartRatio(entradas?.combustible?.val, combustible, 'in'), section: 'in' },
+        { label: 'Hum. Aire', value: this.balanceChartRatio(entradas?.aguaAlimentacion?.val, combustible, 'in'), section: 'in' },
+        { label: 'Aire', value: this.balanceChartRatio(entradas?.aireCombustion?.val, combustible, 'in'), section: 'in' },
+        { label: 'CO2', value: this.balanceChartRatio(salidas?.co2?.val, combustible, 'out'), section: 'out' },
+        { label: 'H2O', value: this.balanceChartRatio(salidas?.h2o?.val, combustible, 'out'), section: 'out' },
+        { label: 'N2', value: this.balanceChartRatio(salidas?.n2?.val, combustible, 'out'), section: 'out' },
+        { label: 'O2', value: this.balanceChartRatio(salidas?.o2?.val, combustible, 'out'), section: 'out' },
+        { label: 'SO2', value: this.balanceChartRatio(salidas?.so2?.val, combustible, 'out'), section: 'out' },
+        { label: 'CO', value: this.balanceChartRatio(salidas?.co?.val, combustible, 'out'), section: 'out' },
+        { label: 'Hollín', value: this.balanceChartRatio(salidas?.hollin?.val, combustible, 'out'), section: 'out' }
+      ];
+    }
+
+    const entradas = this.evaluationResults?.ben?.entradas;
+    const salidas = this.evaluationResults?.ben?.salidas;
+    const calorCombustion = this.safeBalanceDenominator(entradas?.R29?.val);
+
+    return [
+      { label: 'Calor comb.', value: this.balanceChartRatio(entradas?.R29?.val, calorCombustion, 'in'), section: 'in' },
+      { label: 'Combustible', value: this.balanceChartRatio(entradas?.R30?.val, calorCombustion, 'in'), section: 'in' },
+      { label: 'Aire seco', value: this.balanceChartRatio(entradas?.R31?.val, calorCombustion, 'in'), section: 'in' },
+      { label: 'Hum. Aire', value: this.balanceChartRatio(entradas?.R32?.val, calorCombustion, 'in'), section: 'in' },
+      { label: 'Agua alim.', value: this.balanceChartRatio(entradas?.R33?.val, calorCombustion, 'in'), section: 'in' },
+      { label: 'Vapor', value: this.balanceChartRatio(salidas?.R35?.val, calorCombustion, 'out'), section: 'out' },
+      { label: 'Chimenea', value: this.balanceChartRatio(salidas?.R36?.val, calorCombustion, 'out'), section: 'out' },
+      { label: 'Inq. sól.', value: this.balanceChartRatio(salidas?.R37?.val, calorCombustion, 'out'), section: 'out' },
+      { label: 'Inq. gas', value: this.balanceChartRatio(salidas?.R38?.val, calorCombustion, 'out'), section: 'out' },
+      { label: 'Rad+Conv', value: this.balanceChartRatio(salidas?.R39?.val, calorCombustion, 'out'), section: 'out' },
+      { label: 'Purgas', value: this.balanceChartRatio(salidas?.R40?.val, calorCombustion, 'out'), section: 'out' }
+    ];
+  }
+
+  private getBalanceChartAxisLimit(kind: 'BMS' | 'BEN'): number {
+    const maxValue = Math.max(1, ...this.getBalanceChartRawRows(kind).map(row => Math.abs(row.value)));
+    return Math.max(20, Math.ceil(maxValue / 5) * 5);
+  }
+
+  private safeBalanceDenominator(value: any): number {
+    const parsed = this.parseNumeric(value);
+    return parsed && parsed !== 777 ? Math.abs(parsed) : 1;
+  }
+
+  private balanceChartRatio(value: any, denominator: number, section: 'in' | 'out'): number {
+    const parsed = this.parseNumeric(value);
+    const normalized = parsed === null || parsed === 777 ? 0 : Math.abs(parsed) / denominator;
+    return section === 'in' ? -normalized : normalized;
+  }
+
+  private formatBalanceChartNumber(value: number): string {
+    const abs = Math.abs(value);
+    if (abs >= 1) return value.toFixed(1);
+    if (abs >= 0.1) return value.toFixed(2);
+    return value.toFixed(3);
+  }
+
+  private formatBalanceAxisLabel(value: number): string {
+    return Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1);
+  }
+
   private clampPercent(value: any): number {
     const n = Number(value);
     if (isNaN(n)) return 0;
@@ -1348,50 +1609,15 @@ export class EnergyFormComponent implements OnInit {
   }
 
   getBmsChartData(): Array<{ label: string; value: number; width: number; section: 'in' | 'out' }> {
-    const bms = this.evaluationResults?.bms;
-    if (!bms) return [];
-
-    const entradas = bms.entradas;
-    const salidas = bms.salidas;
-
-    const items = [
-      { label: 'Aire', value: this.parseNumeric(entradas.aireCombustion?.val) || 0, section: 'in' as const },
-      { label: 'Agua', value: this.parseNumeric(entradas.aguaAlimentacion?.val) || 0, section: 'in' as const },
-      { label: 'Comb.', value: this.parseNumeric(entradas.combustible?.val) || 0, section: 'in' as const },
-      { label: 'CO2', value: this.parseNumeric(salidas.co2?.val) || 0, section: 'out' as const },
-      { label: 'N2', value: this.parseNumeric(salidas.n2?.val) || 0, section: 'out' as const },
-      { label: 'O2', value: this.parseNumeric(salidas.o2?.val) || 0, section: 'out' as const },
-      { label: 'SO2', value: this.parseNumeric(salidas.so2?.val) || 0, section: 'out' as const },
-      { label: 'H2O', value: this.parseNumeric(salidas.h2o?.val) || 0, section: 'out' as const },
-      { label: 'CO', value: this.parseNumeric(salidas.co?.val) || 0, section: 'out' as const },
-      { label: 'Hollín', value: this.parseNumeric(salidas.hollin?.val) || 0, section: 'out' as const },
-    ];
-
-    const max = Math.max(1, ...items.map(i => i.value));
-    return items.map(i => ({ ...i, width: (i.value / max) * 100 }));
+    const items = this.getBalanceChartRawRows('BMS');
+    const max = Math.max(1, ...items.map(i => Math.abs(i.value)));
+    return items.map(i => ({ ...i, width: (Math.abs(i.value) / max) * 100 }));
   }
 
   getBenChartData(): Array<{ label: string; value: number; width: number; section: 'in' | 'out' }> {
-    const ben = this.evaluationResults?.ben;
-    if (!ben) return [];
-
-    const entradas = ben.entradas;
-    const salidas = ben.salidas;
-
-    const items = [
-      { label: 'Comb.', value: this.parseNumeric(entradas.R29?.val) || 0, section: 'in' as const },
-      { label: 'Agua', value: this.parseNumeric(entradas.R30?.val) || 0, section: 'in' as const },
-      { label: 'Aire', value: this.parseNumeric(entradas.R31?.val) || 0, section: 'in' as const },
-      { label: 'Calor útil', value: this.parseNumeric(salidas.R35?.val) || 0, section: 'out' as const },
-      { label: 'Chimenea', value: this.parseNumeric(salidas.R36?.val) || 0, section: 'out' as const },
-      { label: 'Inq. sól.', value: this.parseNumeric(salidas.R37?.val) || 0, section: 'out' as const },
-      { label: 'Inq. gas', value: this.parseNumeric(salidas.R38?.val) || 0, section: 'out' as const },
-      { label: 'Rad.+Conv.', value: this.parseNumeric(salidas.R39?.val) || 0, section: 'out' as const },
-      { label: 'Purgas', value: this.parseNumeric(salidas.R40?.val) || 0, section: 'out' as const },
-    ];
-
-    const max = Math.max(1, ...items.map(i => i.value));
-    return items.map(i => ({ ...i, width: (i.value / max) * 100 }));
+    const items = this.getBalanceChartRawRows('BEN');
+    const max = Math.max(1, ...items.map(i => Math.abs(i.value)));
+    return items.map(i => ({ ...i, width: (Math.abs(i.value) / max) * 100 }));
   }
 
   getEmiChartData(): Array<{ label: string; value: number; width: number }> {
@@ -1416,11 +1642,11 @@ export class EnergyFormComponent implements OnInit {
     const efiValue = this.evaluationResults.graficoEficiencia;
     let efiColor;
     if (efiValue > 80) {
-      efiColor = '#28a745'; // Verde
+      efiColor = this.STATUS_GREEN;
     } else if (efiValue >= 75 && efiValue <= 80) {
-      efiColor = '#ffa500'; // Naranja
+      efiColor = this.STATUS_YELLOW;
     } else {
-      efiColor = '#dc3545'; // Rojo
+      efiColor = this.STATUS_RED;
     }
 
     const efiGaugeOptions: ChartOptions = {
@@ -1446,13 +1672,13 @@ export class EnergyFormComponent implements OnInit {
     const combustible = this.selectedCombustible.value;
 
     // Define rangos específicos por tipo de combustible
-    const fuelRanges: Record<string, { green: [number, number], orange: [number, number] }> = {
-      'Gas Natural Camisea': { green: [5, 15], orange: [15, 25] },
-      'Gas Natural Talara': { green: [5, 15], orange: [15, 25] },
-      'GLP': { green: [10, 20], orange: [20, 30] },
-      'Diesel': { green: [15, 25], orange: [25, 35] },
-      'P.I.6': { green: [20, 30], orange: [30, 40] },
-      'P.I.500': { green: [25, 35], orange: [35, 45] }
+    const fuelRanges: Record<string, { green: [number, number], warning: [number, number] }> = {
+      'Gas Natural Camisea': { green: [5, 15], warning: [15, 25] },
+      'Gas Natural Talara': { green: [5, 15], warning: [15, 25] },
+      'GLP': { green: [10, 20], warning: [20, 30] },
+      'Diesel': { green: [15, 25], warning: [25, 35] },
+      'P.I.6': { green: [20, 30], warning: [30, 40] },
+      'P.I.500': { green: [25, 35], warning: [35, 45] }
     };
 
     // Obtener rangos para el combustible actual (usar GLP por defecto)
@@ -1460,11 +1686,11 @@ export class EnergyFormComponent implements OnInit {
 
     let color;
     if (value >= ranges.green[0] && value <= ranges.green[1]) {
-      color = '#28a745'; // Verde (Óptimo)
-    } else if (value >= ranges.orange[0] && value <= ranges.orange[1]) {
-      color = '#ffa500'; // Naranja (Aceptable)
+      color = this.STATUS_GREEN;
+    } else if (value >= ranges.warning[0] && value <= ranges.warning[1]) {
+      color = this.STATUS_RED;
     } else {
-      color = '#dc3545'; // Rojo (Fuera de rango)
+      color = this.STATUS_RED;
     }
 
     const excesoAireGaugeOptions: ChartOptions = {
@@ -1501,11 +1727,11 @@ export class EnergyFormComponent implements OnInit {
     const factorCargaValue = this.evaluationResults.carga.factorCarga;
     let factorCargaColor;
     if (factorCargaValue > 70) {
-      factorCargaColor = '#28a745'; // Verde
+      factorCargaColor = this.STATUS_GREEN;
     } else if (factorCargaValue >= 50 && factorCargaValue <= 70) {
-      factorCargaColor = '#ffa500'; // Naranja
+      factorCargaColor = this.STATUS_YELLOW;
     } else {
-      factorCargaColor = '#dc3545'; // Rojo
+      factorCargaColor = this.STATUS_RED;
     }
 
     const factorCargaGaugeOptions: ChartOptions = {
