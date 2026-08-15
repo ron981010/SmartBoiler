@@ -33,10 +33,10 @@
       <div class="boiler-item" *ngFor="let c of filteredCalderas">
         <img [src]="c.img" alt="caldera" class="boiler-img" />
         <div class="boiler-name">{{c.name}}</div>
-        <label class="checkbox-wrap" [class.selected]="c.selected" (click)="toggleCalderaSelection(c.id)">
-          <input type="checkbox" [checked]="c.selected" />
+        <button type="button" class="checkbox-wrap" [class.selected]="c.selected"
+          [attr.aria-label]="'Seleccionar ' + c.name" (click)="toggleCalderaSelection(c.id)">
           <span class="checkmark">✓</span>
-        </label>
+        </button>
       </div>
     </div>
 
@@ -48,6 +48,18 @@
         </div>
         <div class="op-unit">h/año</div>
       </div>
+    </div>
+
+    <div class="group-label">Producción (opcional)</div>
+    <div class="data-row">
+      <span class="row-label">Consumo nominal (I2)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I2" />
+      <span class="data-unit">kg vapor/h</span>
+    </div>
+    <div class="data-row">
+      <span class="row-label">Área superficial (I3)</span>
+      <input type="number" class="data-input" [(ngModel)]="dataFields.I3" />
+      <span class="data-unit">ft²</span>
     </div>
 
     <div class="continue-wrap">
@@ -71,6 +83,12 @@
     <div class="selected-caldera">{{ selectedCalderaName }}</div>
 
     <div class="group-label">Combustible</div>
+    <div class="data-row">
+      <span class="row-label">Tipo</span>
+      <select class="data-select" [formControl]="selectedCombustible">
+        <option *ngFor="let combustible of combustibles" [ngValue]="combustible">{{ combustible }}</option>
+      </select>
+    </div>
     <div class="data-row">
       <span class="row-label">Precio</span>
       <input type="number" class="data-input" [(ngModel)]="dataFields.I35" />
@@ -188,14 +206,14 @@
       </select>
     </div>
     <div class="data-row">
-      <span class="row-label">STD (alim)</span>
+      <span class="row-label">Flujo de purga (I15)</span>
       <input type="number" class="data-input" [(ngModel)]="dataFields.I15" />
-      <span class="data-unit">ppm</span>
+      <span class="data-unit">kg/h</span>
     </div>
     <div class="data-row">
-      <span class="row-label">STD (purga)</span>
+      <span class="row-label">Flujo de agua total (I16)</span>
       <input type="number" class="data-input" [(ngModel)]="dataFields.I16" />
-      <span class="data-unit">ppm</span>
+      <span class="data-unit">kg/h</span>
     </div>
 
     <div class="section-label">Vapor</div>
@@ -305,33 +323,128 @@
     <div class="selected-caldera">{{ selectedCalderaName }}</div>
 
     <div class="section-label-with-info">
-      <div class="section-label">Cilindrico Horizontal</div>
-      <button class="info-btn" (click)="goToScreen(7)" title="Ver detalles de temperatura">ⓘ</button>
+      <div class="section-label">{{ selectedBoilerTypeLabel }}</div>
+      <button *ngIf="dataFields.boilerType === 'cilindrico_horizontal'" class="info-btn" (click)="goToScreen(7)" title="Ver detalles de temperatura">ⓘ</button>
     </div>
 
-    <div class="data-row">
-      <span class="row-label">Temp. frontal (Tf)</span>
-      <input type="number" class="data-input" [(ngModel)]="dataFields.I23" />
-      <span class="data-unit">°C</span>
-    </div>
+    <div class="group-label">Dimensiones</div>
+    <ng-container [ngSwitch]="dataFields.boilerType">
+      <ng-container *ngSwitchCase="'cilindrico_horizontal'">
+        <div class="data-row">
+          <span class="row-label">Diámetro (I4H)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I4H" />
+          <span class="data-unit">m</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Longitud (I5H)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I5H" />
+          <span class="data-unit">m</span>
+        </div>
+      </ng-container>
 
-    <div class="data-row">
-      <span class="row-label">Temp. lat. Der. (Td)</span>
-      <input type="number" class="data-input" [(ngModel)]="dataFields.I24" />
-      <span class="data-unit">°C</span>
-    </div>
+      <ng-container *ngSwitchCase="'cilindrico_vertical'">
+        <div class="data-row">
+          <span class="row-label">Diámetro (I4V)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I4V" />
+          <span class="data-unit">m</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Altura (I5V)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I5V" />
+          <span class="data-unit">m</span>
+        </div>
+      </ng-container>
 
-    <div class="data-row">
-      <span class="row-label">Temp. posterior (Tp)</span>
-      <input type="number" class="data-input" [(ngModel)]="dataFields.I25" />
-      <span class="data-unit">°C</span>
-    </div>
+      <ng-container *ngSwitchCase="'apin'">
+        <div class="data-row">
+          <span class="row-label">Ancho (I6)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I6" />
+          <span class="data-unit">m</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Longitud (I7)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I7" />
+          <span class="data-unit">m</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Altura (I8)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I8" />
+          <span class="data-unit">m</span>
+        </div>
+      </ng-container>
+    </ng-container>
 
-    <div class="data-row">
-      <span class="row-label">Temp. lat. izq. (Ti)</span>
-      <input type="number" class="data-input" [(ngModel)]="dataFields.I26" />
-      <span class="data-unit">°C</span>
-    </div>
+    <div class="group-label">Temperaturas de pared</div>
+    <ng-container [ngSwitch]="dataFields.boilerType">
+      <ng-container *ngSwitchCase="'cilindrico_horizontal'">
+        <div class="data-row">
+          <span class="row-label">Frontal (I23)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I23" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Lateral derecha (I24)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I24" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Posterior (I25)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I25" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Lateral izquierda (I26)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I26" />
+          <span class="data-unit">°C</span>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'cilindrico_vertical'">
+        <div class="data-row">
+          <span class="row-label">Frontal (I27)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I27" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Posterior (I28)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I28" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Superior (I29)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I29" />
+          <span class="data-unit">°C</span>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'apin'">
+        <div class="data-row">
+          <span class="row-label">Frontal (I30)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I30" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Lateral derecha (I31)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I31" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Posterior (I32)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I32" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Lateral izquierda (I33)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I33" />
+          <span class="data-unit">°C</span>
+        </div>
+        <div class="data-row">
+          <span class="row-label">Superior/inferior (I34)</span>
+          <input type="number" class="data-input" [(ngModel)]="dataFields.I34" />
+          <span class="data-unit">°C</span>
+        </div>
+      </ng-container>
+    </ng-container>
 
     <div class="navigation-buttons-vertical">
       <button class="nav-btn nav-btn-full" (click)="evaluateData()">Evaluar</button>

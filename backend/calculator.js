@@ -248,24 +248,61 @@ function calcula_HV(tipo_vapor, I17, I18) {
 }
 
 
-function calcula_area_y_perdidas(I4H, I5H, I13, I23, I24, I25, I26, I11) {
-  const Af = (Math.PI / 4) * I4H * I4H;
-  const Ad = Math.PI * I4H / 2 * I5H;
-  const Ap = (Math.PI / 4) * I4H * I4H;
-  const Ai = Math.PI * I4H / 2 * I5H;
+function calcula_perdidas_superficiales(tipo_caldero, inputs) {
+  const { I11, I13 } = inputs;
+  let dimensiones;
+  let superficies;
+
+  if (tipo_caldero === 'cilindrico_horizontal') {
+    const Af = (Math.PI / 4) * inputs.I4H * inputs.I4H;
+    const Al = (Math.PI / 2) * inputs.I4H * inputs.I5H;
+    dimensiones = [inputs.I4H, inputs.I5H];
+    superficies = [
+      { area: Af, temp: inputs.I23 },
+      { area: Al, temp: inputs.I24 },
+      { area: Af, temp: inputs.I25 },
+      { area: Al, temp: inputs.I26 }
+    ];
+  } else if (tipo_caldero === 'cilindrico_vertical') {
+    const Af = (Math.PI / 2) * inputs.I4V * inputs.I5V;
+    const As = (Math.PI / 4) * inputs.I4V * inputs.I4V;
+    dimensiones = [inputs.I4V, inputs.I5V];
+    superficies = [
+      { area: Af, temp: inputs.I27 },
+      { area: Af, temp: inputs.I28 },
+      { area: As, temp: inputs.I29 }
+    ];
+  } else if (tipo_caldero === 'apin') {
+    dimensiones = [inputs.I6, inputs.I7, inputs.I8];
+    superficies = [
+      { area: inputs.I6 * inputs.I8, temp: inputs.I30 },
+      { area: inputs.I7 * inputs.I8, temp: inputs.I31 },
+      { area: inputs.I6 * inputs.I8, temp: inputs.I32 },
+      { area: inputs.I7 * inputs.I8, temp: inputs.I33 },
+      // La fuente oficial contabiliza las caras superior e inferior.
+      { area: inputs.I6 * inputs.I7, temp: inputs.I34, multiplicidad: 2 }
+    ];
+  } else {
+    throw new Error(`Tipo de caldero '${tipo_caldero}' no reconocido`);
+  }
+
+  const dimensionesValidas = dimensiones.every(value => Number.isFinite(value) && value > 0);
+  const temperaturasValidas = superficies.every(surface => Number.isFinite(surface.temp));
+  if (!dimensionesValidas || !temperaturasValidas || !Number.isFinite(I11) || !Number.isFinite(I13) || I13 < 0) {
+    return 777;
+  }
+
   const Hc = 10.45 - I13 + 10 * Math.sqrt(I13);
+  const FACTOR_KCAL_H = 3600 / 4.184 / 1000;
 
-  const Qcde = Af * Hc * (I23 - I11) * 3600 / 4.184 / 1000;
-  const Qcld = Ad * Hc * (I24 - I11) * 3600 / 4.184 / 1000;
-  const Qcpo = Ap * Hc * (I25 - I11) * 3600 / 4.184 / 1000;
-  const Qcli = Ai * Hc * (I26 - I11) * 3600 / 4.184 / 1000;
-
-  const Qrde = Af * EMISIVIDAD * SIGMA * (Math.pow(I23 + 273, 4) - Math.pow(I11 + 273, 4)) * 3600 / 4.184 / 1000;
-  const Qrld = Ad * EMISIVIDAD * SIGMA * (Math.pow(I24 + 273, 4) - Math.pow(I11 + 273, 4)) * 3600 / 4.184 / 1000;
-  const Qrpo = Ap * EMISIVIDAD * SIGMA * (Math.pow(I25 + 273, 4) - Math.pow(I11 + 273, 4)) * 3600 / 4.184 / 1000;
-  const Qrli = Ai * EMISIVIDAD * SIGMA * (Math.pow(I26 + 273, 4) - Math.pow(I11 + 273, 4)) * 3600 / 4.184 / 1000;
-
-  return (Qrde + Qcde) + (Qrld + Qcld) + (Qrpo + Qcpo) + (Qrli + Qcli);
+  return superficies.reduce((total, surface) => {
+    const multiplicidad = surface.multiplicidad || 1;
+    const Qc = surface.area * Hc * (surface.temp - I11) * FACTOR_KCAL_H;
+    const Qr = surface.area * EMISIVIDAD * SIGMA
+      * (Math.pow(surface.temp + 273, 4) - Math.pow(I11 + 273, 4))
+      * FACTOR_KCAL_H;
+    return total + multiplicidad * (Qc + Qr);
+  }, 0);
 }
 
 
@@ -409,14 +446,8 @@ function calcular(tipo_combustible, tipo_vapor, inputs) {
   const R38 = Pig;  // inquemados gaseosos
   const R37 = Pis;  // inquemados sólidos
 
-  let R39;
-  const I4H = inputs.I4H;
-  const I5H = inputs.I5H;
-  if (I4H && I5H) {
-    R39 = calcula_area_y_perdidas(I4H, I5H, I13, I23, I24, I25, I26, I11);
-  } else {
-    R39 = 777;
-  }
+  const tipo_caldero = inputs.tipo_caldero || 'cilindrico_horizontal';
+  const R39 = calcula_perdidas_superficiales(tipo_caldero, inputs);
 
   const R29 = calcula_calor_combustion(PCI, I9);
   const R30 = calcula_calor_sensible_combustible(I9, C1, C2, I10);

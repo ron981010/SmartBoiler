@@ -62,6 +62,68 @@ interface FieldConfig {
   unitOptions: string[];
 }
 
+type BoilerType = 'cilindrico_horizontal' | 'cilindrico_vertical' | 'apin';
+
+interface BoilerCard {
+  id: number;
+  name: string;
+  img: string;
+  selected: boolean;
+  isPreset?: boolean;
+  boilerType?: BoilerType;
+  _dbData?: any;
+}
+
+interface BoilerPreset extends BoilerCard {
+  isPreset: true;
+  boilerType: BoilerType;
+  combustible: Combustible;
+  vaporType: 'saturado' | 'sobrecalentado';
+  I2: number;
+  I3: number;
+  I9: number;
+  I10: number;
+  I11: number;
+  I12: number;
+  I13: number;
+  I14: number;
+  I15: number;
+  I16: number;
+  I17: number;
+  I18: number;
+  I19: number;
+  I20: number;
+  I21: number;
+  I22: number;
+  I35: number;
+  I36: number;
+  I37: number;
+  I38: number;
+  I39: number;
+  I40: number;
+  I41: number;
+  I42: number;
+  I4H?: number;
+  I5H?: number;
+  I4V?: number;
+  I5V?: number;
+  I6?: number;
+  I7?: number;
+  I8?: number;
+  I23?: number;
+  I24?: number;
+  I25?: number;
+  I26?: number;
+  I27?: number;
+  I28?: number;
+  I29?: number;
+  I30?: number;
+  I31?: number;
+  I32?: number;
+  I33?: number;
+  I34?: number;
+}
+
 @Component({
   selector: 'app-energy-form',
   standalone: true,
@@ -71,13 +133,12 @@ interface FieldConfig {
 })
 export class EnergyFormComponent implements OnInit {
   private readonly DEFAULT_OPERATION_HOURS = 7920;
-  private readonly DEFAULT_COST_VALUES = [8.0, 3.0, 2.0, 1.3, 1.0, 6.0, 78.7];
   private readonly STATUS_RED = '#ed1717';
   private readonly STATUS_GREEN = '#8bd264';
   private readonly STATUS_YELLOW = '#f7e62f';
 
   fields: FieldConfig[] = [];
-  selectedCombustible: FormControl<Combustible | null> = new FormControl<Combustible | null>('Diesel');
+  selectedCombustible: FormControl<Combustible | null> = new FormControl<Combustible | null>('P.I.6');
   combustibles: Combustible[] = ['Gas Natural Talara', 'Gas Natural Camisea', 'GLP', 'Diesel', 'P.I.6', 'P.I.500'];
 
   operationTimeControl = new FormControl<number | null>(this.DEFAULT_OPERATION_HOURS);
@@ -95,80 +156,123 @@ export class EnergyFormComponent implements OnInit {
   savingEvaluation = false;
   saveError: string | null = null;
 
-  // Lista de calderas para la pantalla de registro (solo una puede estar seleccionada)
-  // "Caldera Example" es la caldera de prueba con los valores del flujo verificado
-  private readonly CALDERA_EXAMPLE = {
-    id: 0,
-    name: 'Caldera Example',
-    img: 'assets/caldera.png',
-    selected: true,
-    // Valores de proceso verificados
-    I2: 49896, I3: 300,
-    combustible: 'Diesel' as Combustible,
-    I9: 1739.3, I9Unit: 'kg/h',
-    I10: 32, I10Unit: '°C',
-    I11: 30, I11Unit: '°C',
-    I12: 50,
-    I13: 1.78,
-    I14: 120, I14Unit: '°C',
-    I15: 3.6, I16: 402.6,
-    I17: 200, I17Unit: 'Psi g',
-    I18: 250, I18Unit: '°C',
-    I19: 7, I20: 350,
-    I21: 262.8, I21Unit: '°C',
-    I22: 3, vaporType: 'saturado',
-    I23: 43, I23Unit: '°C',
-    I24: 53, I24Unit: '°C',
-    I25: 61, I25Unit: '°C',
-    I26: 60, I26Unit: '°C',
-    I4H: 3.6, I5H: 5,
-    I35: 7.5
-  };
+  // Casos reales de referencia. Los IDs negativos evitan colisiones con
+  // los calderos persistidos en SQLite, cuyos IDs son positivos.
+  private readonly CALDERA_PRESETS: BoilerPreset[] = [
+    {
+      id: -101,
+      name: 'Caso Example Box Real',
+      img: 'assets/caldera.png',
+      selected: true,
+      isPreset: true,
+      boilerType: 'apin',
+      combustible: 'P.I.6',
+      vaporType: 'saturado',
+      I2: 15300, I3: 2109,
+      I9: 427, I10: 25, I11: 25, I12: 50, I13: 1.5,
+      I14: 98, I15: 180, I16: 3000, I17: 200, I18: 250,
+      I19: 5, I20: 70, I21: 250, I22: 3,
+      I6: 3.1, I7: 5.6, I8: 3.4,
+      I30: 45, I31: 45, I32: 45, I33: 45, I34: 45,
+      I35: 7.5, I36: 7920,
+      I37: 8, I38: 3, I39: 2, I40: 1.3, I41: 1, I42: 6
+    },
+    {
+      id: -102,
+      name: 'Caso Example Cilíndrico Vertical Real',
+      img: 'assets/caldera.png',
+      selected: false,
+      isPreset: true,
+      boilerType: 'cilindrico_vertical',
+      combustible: 'P.I.6',
+      vaporType: 'saturado',
+      I2: 1725, I3: 350,
+      I9: 43, I10: 25, I11: 25, I12: 50, I13: 1.5,
+      I14: 98, I15: 180, I16: 3000, I17: 150, I18: 150,
+      I19: 4.7, I20: 70, I21: 250, I22: 1,
+      I4V: 1.2, I5V: 2.5,
+      I27: 45, I28: 45, I29: 45,
+      I35: 7.5, I36: 7920,
+      I37: 8, I38: 3, I39: 2, I40: 1.3, I41: 1, I42: 6
+    },
+    {
+      id: -103,
+      name: 'Caso Example Cilíndrico Horizontal Real',
+      img: 'assets/caldera.png',
+      selected: false,
+      isPreset: true,
+      boilerType: 'cilindrico_horizontal',
+      combustible: 'Diesel',
+      vaporType: 'saturado',
+      I2: 11000, I3: 300,
+      I9: 290, I10: 32, I11: 30, I12: 50, I13: 1.78,
+      I14: 120, I15: 350, I16: 3000, I17: 150, I18: 250,
+      I19: 5, I20: 50, I21: 250, I22: 3,
+      I4H: 3.6, I5H: 5,
+      I23: 45, I24: 45, I25: 45, I26: 45,
+      I35: 7.5, I36: 7920,
+      I37: 8, I38: 3, I39: 2, I40: 1.3, I41: 1, I42: 6
+    }
+  ];
 
-  calderas: Array<{id:number; name:string; img:string; selected:boolean}> = [];
+  calderas: BoilerCard[] = [];
   companyName = '';
   plants: Array<{id: number; nombre: string}> = [];
   selectedPlantId: number | null = null;
   searchQuery = '';
-  private allCalderasDB: any[] = [];
+  private allCalderasDB: BoilerCard[] = [];
 
   // Datos de las pantallas 2, 3 y 4
   dataFields = {
-    I2: 49896,
-    I3: 300,
-    I9: 1739.3,
+    boilerType: 'apin' as BoilerType,
+    I2: 15300,
+    I3: 2109,
+    I9: 427,
     I9Unit: 'kg/h',
-    I10: 32,
+    I10: 25,
     I10Unit: '°C',
-    I11: 30,
+    I11: 25,
     I11Unit: '°C',
     I12: 50,
-    I13: 1.78,
+    I13: 1.5,
     I35: 7.5,
-    I14: 120,
+    I14: 98,
     I14Unit: '°C',
-    I15: 3.6,
-    I16: 402.6,
+    I15: 180,
+    I16: 3000,
     I17: 200,
     I17Unit: 'Psi g',
     I18: 250,
     I18Unit: '°C',
-    I19: 7,
-    I20: 350,
-    I21: 262.8,
+    I19: 5,
+    I20: 70,
+    I21: 250,
     I21Unit: '°C',
     I22: 3,
     vaporType: 'saturado',
-    I23: 43,
+    I23: null as number | null,
     I23Unit: '°C',
-    I24: 53,
+    I24: null as number | null,
     I24Unit: '°C',
-    I25: 61,
+    I25: null as number | null,
     I25Unit: '°C',
-    I26: 60,
+    I26: null as number | null,
     I26Unit: '°C',
-    I4H: 3.6,
-    I5H: 5
+    I27: null as number | null,
+    I28: null as number | null,
+    I29: null as number | null,
+    I30: 45,
+    I31: 45,
+    I32: 45,
+    I33: 45,
+    I34: 45,
+    I4H: null as number | null,
+    I5H: null as number | null,
+    I4V: null as number | null,
+    I5V: null as number | null,
+    I6: 3.1,
+    I7: 5.6,
+    I8: 3.4
   };
 
   // cost screen data
@@ -239,6 +343,13 @@ export class EnergyFormComponent implements OnInit {
     private router: Router
   ) { }
 
+  private getPresetCards(): BoilerPreset[] {
+    return this.CALDERA_PRESETS.map((preset, index) => ({
+      ...preset,
+      selected: index === 0
+    }));
+  }
+
   ngOnInit(): void {
     const now = new Date();
     this.currentDate = {
@@ -252,8 +363,8 @@ export class EnergyFormComponent implements OnInit {
     this.companyService.getCompanyFicha().subscribe({ next: (c) => this.companyName = c.empresa || '', error: () => {} });
     this.plantService.getAllPlants().subscribe({ next: (ps) => this.plants = ps.map(p => ({ id: p.id!, nombre: p.nombre })), error: () => {} });
 
-    // Cargar calderas desde la DB (+ siempre mostrar Caldera Example primero)
-    this.calderas = [{ ...this.CALDERA_EXAMPLE, selected: true }];
+    // Cargar calderas desde la DB (+ siempre mostrar los tres casos reales primero)
+    this.calderas = this.getPresetCards();
     this.calderosService.getAllCalderos().subscribe({
       next: (dbCalderas) => {
         const fromDb = dbCalderas.map(c => ({
@@ -266,13 +377,13 @@ export class EnergyFormComponent implements OnInit {
         }));
         this.allCalderasDB = fromDb;
         this.calderas = [
-          { ...this.CALDERA_EXAMPLE, selected: true },
+          ...this.getPresetCards(),
           ...fromDb
         ];
       },
       error: () => {
-        // Si falla la carga (ej: no autenticado aún), mante solo Caldera Example
-        this.calderas = [{ ...this.CALDERA_EXAMPLE, selected: true }];
+        // Si falla la carga, mantener disponibles los tres casos reales.
+        this.calderas = this.getPresetCards();
       }
     });
 
@@ -291,7 +402,7 @@ export class EnergyFormComponent implements OnInit {
       id: 'I9',
       label: 'Consumo',
       icon: '🔥',
-      valueControl: new FormControl<number | null>(1739.3),
+      valueControl: new FormControl<number | null>(427),
       unitControl: new FormControl<string | null>('kg/h'),
       standardValue: null,
       standardUnitLabel: 'kg/h',
@@ -315,7 +426,7 @@ export class EnergyFormComponent implements OnInit {
         id: 'I10',
         label: 'Temperatura',
         icon: '🌡',
-        valueControl: new FormControl<number | null>(32),
+        valueControl: new FormControl<number | null>(25),
         unitControl: new FormControl<string | null>('°C'),
         standardValue: null,
         standardUnitLabel: '°C',
@@ -323,8 +434,8 @@ export class EnergyFormComponent implements OnInit {
       }
     ];
 
-    // Pre-rellenar dataFields con Caldera Example (fields ya inicializados)
-    this.applyCalderaDefaults(this.CALDERA_EXAMPLE);
+    // Pre-rellenar dataFields con el primer caso real (fields ya inicializados)
+    this.applyCalderaDefaults(this.CALDERA_PRESETS[0]);
 
     // Subscribe to combustible changes para actualizar rótulos en I35 y I9
     this.selectedCombustible.valueChanges.subscribe((comb) => {
@@ -451,80 +562,69 @@ export class EnergyFormComponent implements OnInit {
   }
 
   private clearScreen6Fields() {
-    // Temperatura de paredes
-    this.dataFields.I23 = null as any;
-    this.dataFields.I24 = null as any;
-    this.dataFields.I25 = null as any;
-    this.dataFields.I26 = null as any;
+    // Dimensiones y temperaturas de paredes para las tres geometrías.
+    const surfaceKeys = [
+      'I4H', 'I5H', 'I4V', 'I5V', 'I6', 'I7', 'I8',
+      'I23', 'I24', 'I25', 'I26', 'I27', 'I28', 'I29',
+      'I30', 'I31', 'I32', 'I33', 'I34'
+    ] as const;
+    surfaceKeys.forEach(key => this.dataFields[key] = null as any);
   }
 
-  // Rellena dataFields con los valores de Caldera Example
-  private applyCalderaDefaults(ex: typeof this.CALDERA_EXAMPLE) {
-    this.operationTimeControl.setValue(this.DEFAULT_OPERATION_HOURS);
+  // Rellena el formulario completo con uno de los tres casos reales.
+  private applyCalderaDefaults(ex: BoilerPreset) {
+    this.operationTimeControl.setValue(ex.I36);
+    this.dataFields.boilerType = ex.boilerType;
     this.dataFields.I2 = ex.I2;
     this.dataFields.I3 = ex.I3;
     this.dataFields.I9 = ex.I9;
-    this.dataFields.I9Unit = ex.I9Unit;
+    this.dataFields.I9Unit = 'kg/h';
     this.dataFields.I10 = ex.I10;
-    this.dataFields.I10Unit = ex.I10Unit;
+    this.dataFields.I10Unit = '°C';
     this.dataFields.I11 = ex.I11;
-    this.dataFields.I11Unit = ex.I11Unit;
+    this.dataFields.I11Unit = '°C';
     this.dataFields.I12 = ex.I12;
     this.dataFields.I13 = ex.I13;
     this.dataFields.I14 = ex.I14;
-    this.dataFields.I14Unit = ex.I14Unit;
+    this.dataFields.I14Unit = '°C';
     this.dataFields.I15 = ex.I15;
     this.dataFields.I16 = ex.I16;
     this.dataFields.I17 = ex.I17;
-    this.dataFields.I17Unit = ex.I17Unit;
+    this.dataFields.I17Unit = 'Psi g';
     this.dataFields.I18 = ex.I18;
-    this.dataFields.I18Unit = ex.I18Unit;
+    this.dataFields.I18Unit = '°C';
     this.dataFields.I19 = ex.I19;
     this.dataFields.I20 = ex.I20;
     this.dataFields.I21 = ex.I21;
-    this.dataFields.I21Unit = ex.I21Unit;
+    this.dataFields.I21Unit = '°C';
     this.dataFields.I22 = ex.I22;
-    this.dataFields.I23 = ex.I23;
-    this.dataFields.I23Unit = ex.I23Unit;
-    this.dataFields.I24 = ex.I24;
-    this.dataFields.I24Unit = ex.I24Unit;
-    this.dataFields.I25 = ex.I25;
-    this.dataFields.I25Unit = ex.I25Unit;
-    this.dataFields.I26 = ex.I26;
-    this.dataFields.I26Unit = ex.I26Unit;
-    this.dataFields.I4H = ex.I4H;
-    this.dataFields.I5H = ex.I5H;
     this.dataFields.I35 = ex.I35;
-    this.dataFields.vaporType = ex.vaporType ?? 'saturado';
+    this.dataFields.vaporType = ex.vaporType;
+
+    const optionalKeys = [
+      'I4H', 'I5H', 'I4V', 'I5V', 'I6', 'I7', 'I8',
+      'I23', 'I24', 'I25', 'I26', 'I27', 'I28', 'I29',
+      'I30', 'I31', 'I32', 'I33', 'I34'
+    ] as const;
+    optionalKeys.forEach(key => this.dataFields[key] = (ex[key] ?? null) as any);
 
     this.costEditable = false;
-    this.costItems.forEach((i, idx) => i.value = this.DEFAULT_COST_VALUES[idx] || null);
+    const directCosts = [ex.I37, ex.I38, ex.I39, ex.I40, ex.I41, ex.I42];
+    const energyCost = 100 - directCosts.reduce((sum, value) => sum + value, 0);
+    this.costItems.forEach((item, index) => {
+      item.value = index < directCosts.length ? directCosts[index] : energyCost;
+    });
 
-    // Campos de proceso
+    // Mantener sincronizados los FormControl auxiliares usados para unidades.
     const setField = (id: string, val: number | null, unit?: string) => {
       const f = this.fields.find(f => f.id === id);
       if (!f) return;
       f.valueControl.setValue(val);
       if (unit && f.unitControl) f.unitControl.setValue(unit);
     };
-    setField('I9',  ex.I9,  ex.I9Unit);
-    setField('I10', ex.I10, ex.I10Unit);
-    setField('I11', ex.I11, ex.I11Unit);
-    setField('I12', ex.I12);
-    setField('I13', ex.I13);
-    setField('I14', ex.I14, ex.I14Unit);
-    setField('I15', ex.I15);
-    setField('I16', ex.I16);
-    setField('I17', ex.I17, ex.I17Unit);
-    setField('I18', ex.I18, ex.I18Unit);
-    setField('I19', ex.I19);
-    setField('I20', ex.I20);
-    setField('I21', ex.I21, ex.I21Unit);
-    setField('I22', ex.I22);
-    setField('I23', ex.I23, ex.I23Unit);
-    setField('I24', ex.I24, ex.I24Unit);
-    setField('I25', ex.I25, ex.I25Unit);
-    setField('I26', ex.I26, ex.I26Unit);
+    setField('I9', ex.I9, 'kg/h');
+    setField('I10', ex.I10, '°C');
+    setField('I17', ex.I17, 'Psi g');
     setField('I35', ex.I35);
     this.selectedCombustible.setValue(ex.combustible);
   }
@@ -554,9 +654,23 @@ export class EnergyFormComponent implements OnInit {
     this.dataFields.I24 = null as any;
     this.dataFields.I25 = null as any;
     this.dataFields.I26 = null as any;
+    this.dataFields.I27 = null as any;
+    this.dataFields.I28 = null as any;
+    this.dataFields.I29 = null as any;
+    this.dataFields.I30 = null as any;
+    this.dataFields.I31 = null as any;
+    this.dataFields.I32 = null as any;
+    this.dataFields.I33 = null as any;
+    this.dataFields.I34 = null as any;
     this.dataFields.I35 = null as any;
     this.dataFields.I4H = null as any;
     this.dataFields.I5H = null as any;
+    this.dataFields.I4V = null as any;
+    this.dataFields.I5V = null as any;
+    this.dataFields.I6 = null as any;
+    this.dataFields.I7 = null as any;
+    this.dataFields.I8 = null as any;
+    this.dataFields.boilerType = 'cilindrico_horizontal';
     this.dataFields.vaporType = 'saturado';
     this.costEditable = false;
     this.costItems.forEach(i => i.value = null);
@@ -564,24 +678,45 @@ export class EnergyFormComponent implements OnInit {
 
   // Selección única: al seleccionar una caldera, deselecciona las demás y pre-rellena datos
   toggleCalderaSelection(id: number) {
-    this.calderas.forEach(c => (c as any).selected = ((c as any).id === id));
-    if (id === 0) {
-      // Caldera Example → valores de prueba verificados
-      this.applyCalderaDefaults(this.CALDERA_EXAMPLE);
+    this.calderas.forEach(c => c.selected = c.id === id);
+    const selectedCard = this.calderas.find(c => c.id === id);
+    if (selectedCard?.isPreset) {
+      this.applyCalderaDefaults(selectedCard as BoilerPreset);
     } else {
       // Caldero de la DB: limpiar form y rellenar solo con datos de la ficha
       this.clearProcessFields();
-      const selected = (this.calderas.find(c => (c as any).id === id) as any)?._dbData;
+      const selected = selectedCard?._dbData;
       if (selected) {
         if (selected.capacidad_instalada != null) this.dataFields.I2 = selected.capacidad_instalada;
         if (selected.superficie != null)          this.dataFields.I3 = selected.superficie;
         const combMap: Record<string, Combustible> = {
           'Diesel': 'Diesel', 'GLP': 'GLP',
           'Gas Natural': 'Gas Natural Camisea',
-          'Gas Natural Camisea': 'Gas Natural Camisea'
+          'Gas Natural Camisea': 'Gas Natural Camisea',
+          'Gas Natural (Camisea)': 'Gas Natural Camisea',
+          'Gas Natural Talara': 'Gas Natural Talara',
+          'Gas Natural (Talara)': 'Gas Natural Talara',
+          'Petróleo Industrial Nº 6': 'P.I.6',
+          'Petróleo Industrial Nº 500': 'P.I.500'
         };
         const comb = combMap[selected.combustible];
         if (comb) this.selectedCombustible.setValue(comb);
+
+        const boilerType: BoilerType = ['cilindrico_horizontal', 'cilindrico_vertical', 'apin'].includes(selected.tipo_caldero)
+          ? selected.tipo_caldero
+          : 'cilindrico_horizontal';
+        this.dataFields.boilerType = boilerType;
+        if (boilerType === 'cilindrico_horizontal') {
+          this.dataFields.I4H = selected.diametro_d ?? null;
+          this.dataFields.I5H = selected.longitud_l ?? null;
+        } else if (boilerType === 'cilindrico_vertical') {
+          this.dataFields.I4V = selected.diametro_d ?? null;
+          this.dataFields.I5V = selected.altura_h ?? null;
+        } else {
+          this.dataFields.I6 = selected.ancho_a ?? null;
+          this.dataFields.I7 = selected.longitud_l ?? null;
+          this.dataFields.I8 = selected.altura_h ?? null;
+        }
       }
     }
   }
@@ -600,10 +735,19 @@ export class EnergyFormComponent implements OnInit {
     return c ? c.name : '';
   }
 
+  get selectedBoilerTypeLabel(): string {
+    const labels: Record<BoilerType, string> = {
+      cilindrico_horizontal: 'Cilíndrico Horizontal',
+      cilindrico_vertical: 'Cilíndrico Vertical',
+      apin: 'Tipo Caja (Box)'
+    };
+    return labels[this.dataFields.boilerType];
+  }
+
   get filteredCalderas() {
     const q = this.searchQuery.trim().toLowerCase();
     const list = this.selectedPlantId
-      ? this.calderas.filter(c => (c as any).id === 0 || (c as any)._dbData?.plant_id === this.selectedPlantId)
+      ? this.calderas.filter(c => c.isPreset || c._dbData?.plant_id === this.selectedPlantId)
       : this.calderas;
     if (!q) return list;
     return list.filter(c => c.name.toLowerCase().includes(q));
@@ -668,18 +812,42 @@ export class EnergyFormComponent implements OnInit {
 
   async evaluateData() {
     // ── Validar campos requeridos ────────────────────────────────────────────
-    const I35_v = this.fields.find(f => f.id === 'I35')?.valueControl.value;
-    const I9_v  = this.fields.find(f => f.id === 'I9')?.valueControl.value;
-    const I17_v = this.fields.find(f => f.id === 'I17')?.valueControl.value;
-    const I10_v = this.fields.find(f => f.id === 'I10')?.valueControl.value;
+    const geometryChecks = this.dataFields.boilerType === 'cilindrico_horizontal'
+      ? [
+          { val: this.dataFields.I4H, name: 'Diámetro horizontal (I4H)' },
+          { val: this.dataFields.I5H, name: 'Longitud horizontal (I5H)' },
+          { val: this.dataFields.I23, name: 'Temperatura frontal (I23)' },
+          { val: this.dataFields.I24, name: 'Temperatura lateral derecha (I24)' },
+          { val: this.dataFields.I25, name: 'Temperatura posterior (I25)' },
+          { val: this.dataFields.I26, name: 'Temperatura lateral izquierda (I26)' }
+        ]
+      : this.dataFields.boilerType === 'cilindrico_vertical'
+        ? [
+            { val: this.dataFields.I4V, name: 'Diámetro vertical (I4V)' },
+            { val: this.dataFields.I5V, name: 'Altura vertical (I5V)' },
+            { val: this.dataFields.I27, name: 'Temperatura frontal (I27)' },
+            { val: this.dataFields.I28, name: 'Temperatura posterior (I28)' },
+            { val: this.dataFields.I29, name: 'Temperatura superior (I29)' }
+          ]
+        : [
+            { val: this.dataFields.I6, name: 'Ancho de caja (I6)' },
+            { val: this.dataFields.I7, name: 'Longitud de caja (I7)' },
+            { val: this.dataFields.I8, name: 'Altura de caja (I8)' },
+            { val: this.dataFields.I30, name: 'Temperatura frontal (I30)' },
+            { val: this.dataFields.I31, name: 'Temperatura lateral derecha (I31)' },
+            { val: this.dataFields.I32, name: 'Temperatura posterior (I32)' },
+            { val: this.dataFields.I33, name: 'Temperatura lateral izquierda (I33)' },
+            { val: this.dataFields.I34, name: 'Temperatura superior/inferior (I34)' }
+          ];
 
     const requiredChecks = [
-      { val: I9_v ?? this.dataFields.I9, name: 'Consumo (I9)' },
-      { val: I17_v ?? this.dataFields.I17, name: 'Presión (I17)' },
-      { val: I10_v ?? this.dataFields.I10, name: 'Temperatura ambiente (I10)' },
-      { val: this.dataFields.I19, name: 'CO₂ (I19)' },
-      { val: this.dataFields.I20, name: 'Temperatura de gases (I20)' },
-      { val: this.dataFields.I21, name: 'Temperatura de gases 2 (I21)' },
+      { val: this.dataFields.I9, name: 'Flujo combustible (I9)' },
+      { val: this.dataFields.I10, name: 'Temperatura combustible (I10)' },
+      { val: this.dataFields.I17, name: 'Presión de vapor (I17)' },
+      { val: this.dataFields.I19, name: 'Oxígeno de chimenea (I19)' },
+      { val: this.dataFields.I20, name: 'CO de chimenea (I20)' },
+      { val: this.dataFields.I21, name: 'Temperatura de gases (I21)' },
+      ...geometryChecks
     ];
     const missing = requiredChecks.filter(c => c.val === null || c.val === undefined || c.val === 0);
     if (missing.length > 0) {
@@ -703,15 +871,16 @@ export class EnergyFormComponent implements OnInit {
     const payload = {
       tipo_combustible: tipoComb,
       tipo_vapor:       tipoVapor,
-      I9:  Number(I9_v ?? this.dataFields.I9)  || 0,
-      I10: Number(I10_v ?? this.dataFields.I10) || 0,
+      tipo_caldero:     this.dataFields.boilerType,
+      I9:  Number(this.dataFields.I9) || 0,
+      I10: Number(this.dataFields.I10) || 0,
       I11: Number(this.dataFields.I11) || 0,
       I12: Number(this.dataFields.I12) || 0,
       I13: Number(this.dataFields.I13) || 0,
       I14: Number(this.dataFields.I14) || 0,
       I15: Number(this.dataFields.I15) || 1,
       I16: Number(this.dataFields.I16) || 2,
-      I17: Number(I17_v ?? this.dataFields.I17) || 0,
+      I17: Number(this.dataFields.I17) || 0,
       I18: Number(this.dataFields.I18) || 0,
       I19: Number(this.dataFields.I19) || 0,
       I20: Number(this.dataFields.I20) || 0,
@@ -721,11 +890,24 @@ export class EnergyFormComponent implements OnInit {
       I24: Number(this.dataFields.I24) || 0,
       I25: Number(this.dataFields.I25) || 0,
       I26: Number(this.dataFields.I26) || 0,
-      I2:  Number(this.dataFields.I2)  || 49896,
-      I3:  Number(this.dataFields.I3)  || 300,
-      I4H: Number(this.dataFields.I4H) || 3.6,
-      I5H: Number(this.dataFields.I5H) || 5,
-      I35: Number(I35_v ?? this.dataFields.I35) || 0,
+      I27: Number(this.dataFields.I27) || 0,
+      I28: Number(this.dataFields.I28) || 0,
+      I29: Number(this.dataFields.I29) || 0,
+      I30: Number(this.dataFields.I30) || 0,
+      I31: Number(this.dataFields.I31) || 0,
+      I32: Number(this.dataFields.I32) || 0,
+      I33: Number(this.dataFields.I33) || 0,
+      I34: Number(this.dataFields.I34) || 0,
+      I2:  Number(this.dataFields.I2)  || 0,
+      I3:  Number(this.dataFields.I3)  || 0,
+      I4H: Number(this.dataFields.I4H) || 0,
+      I5H: Number(this.dataFields.I5H) || 0,
+      I4V: Number(this.dataFields.I4V) || 0,
+      I5V: Number(this.dataFields.I5V) || 0,
+      I6: Number(this.dataFields.I6) || 0,
+      I7: Number(this.dataFields.I7) || 0,
+      I8: Number(this.dataFields.I8) || 0,
+      I35: Number(this.dataFields.I35) || 0,
       I36: Number(this.operationTimeControl.value) || 7920,
       I37: this.costItems[0]?.value ?? 0,
       I38: this.costItems[1]?.value ?? 0,
@@ -1876,7 +2058,7 @@ export class EnergyFormComponent implements OnInit {
   reportResults() {
     alert('¡Reporte enviado! Se reportó por correo electrónico a todos los operadores asignados.');
     this.currentScreen = 1;
-    this.toggleCalderaSelection(0);
+    this.toggleCalderaSelection(this.CALDERA_PRESETS[0].id);
     this.evaluationResults = null;
     this.activeResultsTab = 'COM';
     this.destroyCharts();
