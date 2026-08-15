@@ -879,6 +879,14 @@ app.post('/api/calderos-ficha', verifyToken, async (req, res) => {
   try {
     const { id, plant_id, nombre, marca, tipo_caldero, configuracion, combustible, capacidad_instalada, capacidad_unidad, presion_diseño, presion_unidad, imagen_path, superficie, año, tratamiento_externo, tratamiento_interno, diametro_d, longitud_l, altura_h, ancho_a } = req.body;
 
+    const esDimensionPositiva = (valor) => Number.isFinite(Number(valor)) && Number(valor) > 0;
+    if (tipo_caldero === 'apin'
+      && (![ancho_a, longitud_l, altura_h].every(esDimensionPositiva))) {
+      return res.status(400).json({
+        error: 'Los calderos tipo caja (box) requieren ancho, longitud y altura mayores que cero'
+      });
+    }
+
     console.log('===== CALDERO POST =====');
     console.log('User ID:', req.userId);
     console.log('Caldero ID:', id);

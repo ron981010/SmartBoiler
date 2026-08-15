@@ -373,8 +373,8 @@ export class CalderosComponent implements OnInit, OnDestroy {
         return;
       }
     } else if (tipoCaldero === 'apin') {
-      if (!formValues.ancho_a || !formValues.longitud_l) {
-        this.error = 'Por favor completa Ancho y Longitud';
+      if (!formValues.ancho_a || !formValues.longitud_l || !formValues.altura_h) {
+        this.error = 'Por favor completa Ancho, Longitud y Altura';
         return;
       }
     }
@@ -507,18 +507,18 @@ export class CalderosComponent implements OnInit, OnDestroy {
   // Check if field should be shown based on caldero type
   shouldShowField(fieldName: string): boolean {
     if (!this.selectedTipoCaldero && !this.selectedCaldero?.tipo_caldero) return false;
-    
+
     const tipo = this.selectedTipoCaldero || this.selectedCaldero?.tipo_caldero;
-    
-    if (fieldName === 'diametro_d' || fieldName === 'longitud_l') {
-      return tipo === 'cilindrico_horizontal';
-    }
-    if (fieldName === 'diametro_d' || fieldName === 'altura_h') {
-      return tipo === 'cilindrico_vertical';
-    }
-    if (fieldName === 'ancho_a' || fieldName === 'longitud_l') {
-      return tipo === 'apin';
-    }
-    return true;
+
+    const dimensionFields = ['diametro_d', 'longitud_l', 'altura_h', 'ancho_a'];
+    if (!dimensionFields.includes(fieldName)) return true;
+
+    const dimensionsByType: Record<string, string[]> = {
+      cilindrico_horizontal: ['diametro_d', 'longitud_l'],
+      cilindrico_vertical: ['diametro_d', 'altura_h'],
+      apin: ['ancho_a', 'longitud_l', 'altura_h']
+    };
+
+    return dimensionsByType[tipo || '']?.includes(fieldName) ?? false;
   }
 }
