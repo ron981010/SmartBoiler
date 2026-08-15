@@ -38,6 +38,32 @@
   }
   .input-row input:focus, .input-row select:focus { border-color: #2563eb; }
   .input-row select { text-align: left; }
+  .boiler-type-picker {
+    position: sticky; top: 0; z-index: 10; margin: -4px 0 10px; padding: 10px;
+    background: #172033; border: 1px solid #2563eb; border-radius: 8px;
+    box-shadow: 0 8px 18px rgba(0,0,0,.28);
+  }
+  .boiler-type-picker-title { color: #bfdbfe; font-size: .78rem; font-weight: 700; }
+  .boiler-type-picker-help { color: #64748b; font-size: .66rem; margin: 2px 0 8px; }
+  .boiler-type-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .boiler-type-btn {
+    min-height: 46px; padding: 6px 4px; border: 1px solid #334155; border-radius: 6px;
+    background: #111827; color: #94a3b8; cursor: pointer; font-size: .69rem;
+    line-height: 1.2; transition: background .15s, border-color .15s, color .15s;
+  }
+  .boiler-type-btn:hover { border-color: #60a5fa; color: #dbeafe; }
+  .boiler-type-btn.active {
+    background: #2563eb; border-color: #60a5fa; color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+  }
+  .boiler-type-btn strong { display: block; font-size: .74rem; }
+  .current-boiler-type { color: #93c5fd; }
+  .boiler-fields { padding: 2px 0 0 4px; }
+  .boiler-fields[hidden] { display: none; }
+  .input-subsection-title {
+    color: #64748b; font-size: .67rem; font-weight: 600; letter-spacing: .6px;
+    padding: 7px 0 3px; text-transform: uppercase;
+  }
 
   .btn-row { display: flex; gap: 8px; padding: 12px 0 4px; }
   .btn {
@@ -119,6 +145,23 @@
   <!-- ══ PANEL IZQUIERDO: INPUTS ══ -->
   <div class="panel-inputs" id="panel-inputs">
 
+    <div class="boiler-type-picker">
+      <div class="boiler-type-picker-title">Tipo de caldero para calcular R39</div>
+      <div class="boiler-type-picker-help">Selecciona una geometría; los campos de superficie cambiarán automáticamente.</div>
+      <input type="hidden" id="f_tipo_caldero" value="cilindrico_horizontal">
+      <div class="boiler-type-buttons" role="group" aria-label="Tipo de caldero">
+        <button type="button" class="boiler-type-btn active" data-boiler-type-value="cilindrico_horizontal" aria-pressed="true" onclick="setBoilerType('cilindrico_horizontal')">
+          <strong>Cilíndrico</strong>Horizontal
+        </button>
+        <button type="button" class="boiler-type-btn" data-boiler-type-value="cilindrico_vertical" aria-pressed="false" onclick="setBoilerType('cilindrico_vertical')">
+          <strong>Cilíndrico</strong>Vertical
+        </button>
+        <button type="button" class="boiler-type-btn" data-boiler-type-value="apin" aria-pressed="false" onclick="setBoilerType('apin')">
+          <strong>Tipo caja</strong>Box
+        </button>
+      </div>
+    </div>
+
     <div class="input-section">
       <div class="input-section-title">Combustible y vapor</div>
       <div class="input-row">
@@ -176,13 +219,41 @@
     </div>
 
     <div class="input-section">
-      <div class="input-section-title">Superficies (opcional)</div>
-      <div class="input-row"><label>I23 – Temp. sup. fondo <span>°C</span></label><input type="number" id="f_I23" value="43"></div>
-      <div class="input-row"><label>I24 – Temp. sup. lateral <span>°C</span></label><input type="number" id="f_I24" value="53"></div>
-      <div class="input-row"><label>I25 – Temp. sup. posterior <span>°C</span></label><input type="number" id="f_I25" value="61"></div>
-      <div class="input-row"><label>I26 – Temp. sup. anterior <span>°C</span></label><input type="number" id="f_I26" value="60"></div>
-      <div class="input-row"><label>I4H – Diámetro caldera <span>m</span></label><input type="number" id="f_I4H" value="3.6"></div>
-      <div class="input-row"><label>I5H – Largo caldera <span>m</span></label><input type="number" id="f_I5H" value="5"></div>
+      <div class="input-section-title">Superficies R39 · <span id="boiler-type-current" class="current-boiler-type">Cilíndrico horizontal</span></div>
+
+      <div class="boiler-fields" data-boiler-type="cilindrico_horizontal">
+        <div class="input-subsection-title">Dimensiones</div>
+        <div class="input-row"><label>I4H – Diámetro <span>m</span></label><input type="number" id="f_I4H" value="3.6" min="0" step="any"></div>
+        <div class="input-row"><label>I5H – Longitud <span>m</span></label><input type="number" id="f_I5H" value="5" min="0" step="any"></div>
+        <div class="input-subsection-title">Temperaturas de pared</div>
+        <div class="input-row"><label>I23 – Frontal <span>°C</span></label><input type="number" id="f_I23" value="43" step="any"></div>
+        <div class="input-row"><label>I24 – Lateral derecha <span>°C</span></label><input type="number" id="f_I24" value="53" step="any"></div>
+        <div class="input-row"><label>I25 – Posterior <span>°C</span></label><input type="number" id="f_I25" value="61" step="any"></div>
+        <div class="input-row"><label>I26 – Lateral izquierda <span>°C</span></label><input type="number" id="f_I26" value="60" step="any"></div>
+      </div>
+
+      <div class="boiler-fields" data-boiler-type="cilindrico_vertical" hidden>
+        <div class="input-subsection-title">Dimensiones</div>
+        <div class="input-row"><label>I4V – Diámetro <span>m</span></label><input type="number" id="f_I4V" min="0" step="any" placeholder="1.5"></div>
+        <div class="input-row"><label>I5V – Altura <span>m</span></label><input type="number" id="f_I5V" min="0" step="any" placeholder="2.5"></div>
+        <div class="input-subsection-title">Temperaturas de pared</div>
+        <div class="input-row"><label>I27 – Frontal <span>°C</span></label><input type="number" id="f_I27" step="any" placeholder="°C"></div>
+        <div class="input-row"><label>I28 – Posterior <span>°C</span></label><input type="number" id="f_I28" step="any" placeholder="°C"></div>
+        <div class="input-row"><label>I29 – Superior <span>°C</span></label><input type="number" id="f_I29" step="any" placeholder="°C"></div>
+      </div>
+
+      <div class="boiler-fields" data-boiler-type="apin" hidden>
+        <div class="input-subsection-title">Dimensiones</div>
+        <div class="input-row"><label>I6 – Ancho <span>m</span></label><input type="number" id="f_I6" min="0" step="any" placeholder="1.0"></div>
+        <div class="input-row"><label>I7 – Longitud <span>m</span></label><input type="number" id="f_I7" min="0" step="any" placeholder="1.8"></div>
+        <div class="input-row"><label>I8 – Altura <span>m</span></label><input type="number" id="f_I8" min="0" step="any" placeholder="2.5"></div>
+        <div class="input-subsection-title">Temperaturas de pared</div>
+        <div class="input-row"><label>I30 – Frontal <span>°C</span></label><input type="number" id="f_I30" step="any" placeholder="°C"></div>
+        <div class="input-row"><label>I31 – Lateral derecha <span>°C</span></label><input type="number" id="f_I31" step="any" placeholder="°C"></div>
+        <div class="input-row"><label>I32 – Posterior <span>°C</span></label><input type="number" id="f_I32" step="any" placeholder="°C"></div>
+        <div class="input-row"><label>I33 – Lateral izquierda <span>°C</span></label><input type="number" id="f_I33" step="any" placeholder="°C"></div>
+        <div class="input-row"><label>I34 – Superior/inferior <span>°C</span></label><input type="number" id="f_I34" step="any" placeholder="°C"></div>
+      </div>
     </div>
 
     <div class="input-section">
@@ -342,18 +413,55 @@ function badge(pt){
 }
 
 // ── LECTURA DE INPUTS ──────────────────────────────────────
+function setBoilerType(tipo){
+  const selector = document.getElementById('f_tipo_caldero');
+  if(!selector) return;
+  selector.value = tipo;
+  updateBoilerFields();
+}
+
+function updateBoilerFields(){
+  const selector = document.getElementById('f_tipo_caldero');
+  if(!selector) return;
+  const nombres = {
+    cilindrico_horizontal: 'Cilíndrico horizontal',
+    cilindrico_vertical: 'Cilíndrico vertical',
+    apin: 'Tipo caja (box)',
+  };
+  document.querySelectorAll('.boiler-fields').forEach(group => {
+    const active = group.dataset.boilerType === selector.value;
+    group.hidden = !active;
+    group.setAttribute('aria-hidden', String(!active));
+  });
+  document.querySelectorAll('.boiler-type-btn').forEach(button => {
+    const active = button.dataset.boilerTypeValue === selector.value;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+  const current = document.getElementById('boiler-type-current');
+  if(current) current.textContent = nombres[selector.value] || selector.value;
+}
+
 function readInputs(){
   const g = id => parseFloat(document.getElementById(id).value)||0;
+  const go = id => {
+    const value = parseFloat(document.getElementById(id).value);
+    return Number.isFinite(value) ? value : null;
+  };
   const gs = id => document.getElementById(id).value;
   return {
     tipo_combustible: gs('f_combustible'),
     tipo_vapor: gs('f_vapor'),
+    tipo_caldero: gs('f_tipo_caldero'),
     I2: g('f_I2'), I3: g('f_I3'),
     I9: g('f_I9'), I10: g('f_I10'), I11: g('f_I11'), I12: g('f_I12'), I13: g('f_I13'),
     I14: g('f_I14'), I15: g('f_I15'), I16: g('f_I16'), I17: g('f_I17'), I18: g('f_I18'),
     I19: g('f_I19'), I20: g('f_I20'), I21: g('f_I21'), I22: g('f_I22'),
-    I23: g('f_I23'), I24: g('f_I24'), I25: g('f_I25'), I26: g('f_I26'),
-    I4H: g('f_I4H'), I5H: g('f_I5H'),
+    I23: go('f_I23'), I24: go('f_I24'), I25: go('f_I25'), I26: go('f_I26'),
+    I27: go('f_I27'), I28: go('f_I28'), I29: go('f_I29'),
+    I30: go('f_I30'), I31: go('f_I31'), I32: go('f_I32'), I33: go('f_I33'), I34: go('f_I34'),
+    I4H: go('f_I4H'), I5H: go('f_I5H'), I4V: go('f_I4V'), I5V: go('f_I5V'),
+    I6: go('f_I6'), I7: go('f_I7'), I8: go('f_I8'),
     I35: g('f_I35'), I36: g('f_I36'),
     I37: g('f_I37'), I38: g('f_I38'), I39: g('f_I39'),
     I40: g('f_I40'), I41: g('f_I41'), I42: g('f_I42'),
@@ -369,7 +477,7 @@ function runAudit(){
   document.getElementById('log-placeholder').style.display = 'none';
 
   const inp = readInputs();
-  const {tipo_combustible, tipo_vapor} = inp;
+  const {tipo_combustible, tipo_vapor, tipo_caldero} = inp;
   const p = COMBUSTIBLES[tipo_combustible];
   if(!p){ logErr(`Combustible '${tipo_combustible}' no reconocido`); return; }
 
@@ -390,7 +498,9 @@ function runAudit(){
 
     // ── PASO 2: Humedad ────────────────────────────────────
     sec('PASO 2 – Humedad absoluta del aire');
-    const {I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24,I25,I26,I4H,I5H,I35,I36,I37,I38,I39,I40,I41,I42,I2,I3} = inp;
+    const {I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,
+           I23,I24,I25,I26,I27,I28,I29,I30,I31,I32,I33,I34,
+           I4H,I5H,I4V,I5V,I6,I7,I8,I35,I36,I37,I38,I39,I40,I41,I42,I2,I3} = inp;
     logRow('Temperatura ambiente (I11)', I11,'°C'); logRow('Humedad relativa (I12)', I12,'%');
     const expH = -9.1359 + 0.8073*Math.log(I12) + I11*Math.exp(-2.992+0.002*I12);
     logRow('Exponente', expH);
@@ -527,27 +637,79 @@ function runAudit(){
     // ── PASO 9: Pérdidas superficiales ────────────────────
     sec('PASO 9 – Pérdidas superficiales');
     let R39=777;
-    if(I4H&&I5H){
-      const Af=(Math.PI/4)*I4H*I4H, Ad=Math.PI*I4H/2*I5H;
-      const Ap=Af, Ai=Ad;
-      const Hc=10.45-I13+10*Math.sqrt(I13);
-      logRow('I4H diámetro', I4H,'m'); logRow('I5H largo', I5H,'m');
-      logRow('Af (área fondo)', Af,'m²'); logRow('Ad (área lateral)', Ad,'m²');
-      logRow('Hc (coef. conv.)', Hc,'W/m²K');
-      const Qcde=Af*Hc*(I23-I11)*3600/4.184/1000;
-      const Qcld=Ad*Hc*(I24-I11)*3600/4.184/1000;
-      const Qcpo=Ap*Hc*(I25-I11)*3600/4.184/1000;
-      const Qcli=Ai*Hc*(I26-I11)*3600/4.184/1000;
-      const Qrde=Af*EMISIVIDAD*SIGMA*(Math.pow(I23+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
-      const Qrld=Ad*EMISIVIDAD*SIGMA*(Math.pow(I24+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
-      const Qrpo=Ap*EMISIVIDAD*SIGMA*(Math.pow(I25+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
-      const Qrli=Ai*EMISIVIDAD*SIGMA*(Math.pow(I26+273,4)-Math.pow(I11+273,4))*3600/4.184/1000;
-      logRow('Qcde conv fondo', Qcde,'kcal/h'); logRow('Qcld conv lateral', Qcld,'kcal/h');
-      logRow('Qrde rad fondo', Qrde,'kcal/h'); logRow('Qrld rad lateral', Qrld,'kcal/h');
-      R39=(Qrde+Qcde)+(Qrld+Qcld)+(Qrpo+Qcpo)+(Qrli+Qcli);
-      logRow('R39 (total pérd. sup)', R39,'kcal/h');
+    const Hc=10.45-I13+10*Math.sqrt(I13);
+    let configR39;
+
+    if(tipo_caldero==='cilindrico_horizontal'){
+      const Af=(Math.PI/4)*I4H*I4H, Ad=(Math.PI/2)*I4H*I5H;
+      configR39={
+        nombre:'Cilíndrico horizontal',
+        dimensiones:[['I4H','diámetro',I4H],['I5H','longitud',I5H]],
+        superficies:[
+          {codigo:'f',nombre:'frontal',area:Af,temp:I23,tempId:'I23'},
+          {codigo:'d',nombre:'lateral derecha',area:Ad,temp:I24,tempId:'I24'},
+          {codigo:'p',nombre:'posterior',area:Af,temp:I25,tempId:'I25'},
+          {codigo:'i',nombre:'lateral izquierda',area:Ad,temp:I26,tempId:'I26'},
+        ],
+      };
+    } else if(tipo_caldero==='cilindrico_vertical'){
+      // La tabla fuente define Tf=I27, Tp=I28 y Ts=I29; se corrigen aquí
+      // las referencias tipográficas Ti/Tde/Tpo/Tli de sus fórmulas impresas.
+      const Af=(Math.PI/2)*I4V*I5V, As=(Math.PI/4)*I4V*I4V;
+      configR39={
+        nombre:'Cilíndrico vertical',
+        dimensiones:[['I4V','diámetro',I4V],['I5V','altura',I5V]],
+        superficies:[
+          {codigo:'f',nombre:'frontal',area:Af,temp:I27,tempId:'I27'},
+          {codigo:'p',nombre:'posterior',area:Af,temp:I28,tempId:'I28'},
+          {codigo:'s',nombre:'superior',area:As,temp:I29,tempId:'I29'},
+        ],
+      };
+    } else if(tipo_caldero==='apin'){
+      // El Word confirmado como fuente oficial usa As y Ts para dos caras:
+      // superior e inferior. Por eso Qcs y Qrs se suman dos veces.
+      configR39={
+        nombre:'Tipo caja (box)',
+        dimensiones:[['I6','ancho',I6],['I7','longitud',I7],['I8','altura',I8]],
+        superficies:[
+          {codigo:'f',nombre:'frontal',area:I6*I8,temp:I30,tempId:'I30'},
+          {codigo:'d',nombre:'lateral derecha',area:I7*I8,temp:I31,tempId:'I31'},
+          {codigo:'p',nombre:'posterior',area:I6*I8,temp:I32,tempId:'I32'},
+          {codigo:'i',nombre:'lateral izquierda',area:I7*I8,temp:I33,tempId:'I33'},
+          {codigo:'s',nombre:'superior/inferior',area:I6*I7,temp:I34,tempId:'I34',multiplicidad:2},
+        ],
+      };
     } else {
-      logRow('R39', '777 (N/A – I4H/I5H no dados)');
+      throw new Error(`Tipo de caldero '${tipo_caldero}' no reconocido`);
+    }
+
+    const invalidosR39=[
+      ...configR39.dimensiones.filter(([, ,valor])=>!Number.isFinite(valor)||valor<=0).map(([id])=>id),
+      ...configR39.superficies.filter(s=>!Number.isFinite(s.temp)).map(s=>s.tempId),
+    ];
+
+    logRow('Tipo de caldero', configR39.nombre);
+    if(invalidosR39.length===0){
+      const FACTOR_KCAL_H=3600/4.184/1000;
+      logRow('Hc (coef. conv.)', Hc,'W/m²K');
+      configR39.dimensiones.forEach(([id,nombre,valor])=>logRow(`${id} (${nombre})`,valor,'m'));
+      R39=0;
+      configR39.superficies.forEach(superficie=>{
+        const multiplicidad=superficie.multiplicidad||1;
+        const Qc=superficie.area*Hc*(superficie.temp-I11)*FACTOR_KCAL_H;
+        const Qr=superficie.area*EMISIVIDAD*SIGMA
+          *(Math.pow(superficie.temp+273,4)-Math.pow(I11+273,4))*FACTOR_KCAL_H;
+        logRow(`A${superficie.codigo} (área ${superficie.nombre})`,superficie.area,'m²');
+        logRow(`Qc${superficie.codigo} (conv. ${superficie.nombre})`,Qc,'kcal/h');
+        logRow(`Qr${superficie.codigo} (rad. ${superficie.nombre})`,Qr,'kcal/h');
+        if(multiplicidad>1) logRow(`Multiplicidad ${superficie.nombre}`,multiplicidad,'caras');
+        R39+=multiplicidad*(Qc+Qr);
+      });
+      logRow('R39 = Qc + Qr (total pérd. sup)', R39,'kcal/h');
+    } else {
+      const faltantes=invalidosR39.join(', ');
+      logRow('R39', `777 (N/A – completar ${faltantes})`);
+      logWarn(`R39 no calculado: faltan valores válidos para ${faltantes}`);
     }
 
     // ── PASO 10: Calores y balance ─────────────────────────
@@ -862,6 +1024,8 @@ function switchTabByName(name){
   const btn = document.querySelector(`[data-tab="${name}"]`);
   if(btn) btn.click();
 }
+
+updateBoilerFields();
 </script>
 </body>
 </html>

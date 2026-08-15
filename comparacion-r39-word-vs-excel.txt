@@ -1,0 +1,214 @@
+COMPARACIÓN DE R39 PARA CALDERO TIPO CAJA: WORD VS. EXCEL
+============================================================
+
+Fecha: 13 de julio de 2026
+Archivo revisado: audit-calculator.html
+Estado: Word confirmado como fuente oficial del cálculo.
+
+
+1. DIFERENCIA PRINCIPAL
+------------------------------------------------------------
+
+La diferencia entre Word y Excel está únicamente en la pared
+superior del caldero tipo caja.
+
+FÓRMULA DEL WORD
+
+    Qr = Qrf + Qrd + Qrp + Qri + 2*Qrs
+    Qc = Qcf + Qcd + Qcp + Qci + 2*Qcs
+
+FÓRMULA DE EXCEL
+
+    Qr = Qrf + Qrd + Qrp + Qri + Qrs
+    Qc = Qcf + Qcd + Qcp + Qci + Qcs
+
+La única diferencia es el número 2:
+
+    Word: suma Qrs y Qcs dos veces.
+    Excel: suma Qrs y Qcs una sola vez.
+
+
+2. QUÉ SIGNIFICA EL FACTOR 2 DEL WORD
+------------------------------------------------------------
+
+Las variables de la pared superior son:
+
+    Qcs = pérdida por convección de la pared superior
+    Qrs = pérdida por radiación de la pared superior
+
+Cuando el Word utiliza:
+
+    2*Qcs
+    2*Qrs
+
+está considerando dos superficies con la misma área y la misma
+temperatura: una superficie superior y otra inferior.
+
+Excel contiene solamente una fila llamada "Superior". Por eso
+suma Qcs y Qrs una sola vez y no contabiliza la pared inferior
+que sí está incluida en el criterio confirmado del Word.
+
+No se trata de una diferencia en las fórmulas individuales de
+radiación o convección. La diferencia está únicamente en cuántas
+veces se suma la superficie superior al total.
+
+
+3. CÁLCULO TOTAL DE R39
+------------------------------------------------------------
+
+R39 es la suma de las pérdidas por convección y radiación:
+
+    R39 = Qc + Qr
+
+Según el Word:
+
+    R39_Word = (Qcf + Qrf)
+             + (Qcd + Qrd)
+             + (Qcp + Qrp)
+             + (Qci + Qri)
+             + 2*(Qcs + Qrs)
+
+Según Excel:
+
+    R39_Excel = (Qcf + Qrf)
+              + (Qcd + Qrd)
+              + (Qcp + Qrp)
+              + (Qci + Qri)
+              + (Qcs + Qrs)
+
+Por lo tanto, la diferencia exacta es:
+
+    R39_Word - R39_Excel = Qcs + Qrs
+
+El resultado del Word contiene una pérdida superior adicional.
+
+
+4. FÓRMULAS DE CADA SUPERFICIE
+------------------------------------------------------------
+
+Coeficiente de convección:
+
+    Hc = 10.45 - I13 + 10*sqrt(I13)
+
+Factor de conversión:
+
+    F = 3600/4.184/1000
+    F ≈ 0.8604
+
+Convección de una superficie:
+
+    Qc_superficie = Área*Hc*(Tpared - I11)*F
+
+Radiación de una superficie:
+
+    Qr_superficie = Área*B*((Tpared + 273)^4
+                    - (I11 + 273)^4)*4.879E-8
+
+donde:
+
+    B   = 0.90, emisividad
+    I11 = temperatura ambiente
+    I13 = velocidad del viento
+
+La expresión 4.879E-8 del Word corresponde aproximadamente a:
+
+    5.67E-8*3600/4.184/1000
+
+
+5. ÁREAS DEL CALDERO TIPO CAJA
+------------------------------------------------------------
+
+Pared delantera:
+
+    Af = I6*I8
+    Tf = I30
+
+Pared lateral derecha:
+
+    Ad = I7*I8
+    Td = I31
+
+Pared posterior:
+
+    Ap = I6*I8
+    Tp = I32
+
+Pared lateral izquierda:
+
+    Ai = I7*I8
+    Ti = I33
+
+Pared superior:
+
+    As = I6*I7
+    Ts = I34
+
+
+6. EJEMPLO CON LOS VALORES REVISADOS EN EXCEL
+------------------------------------------------------------
+
+Valores:
+
+    I6  = 5 m
+    I7  = 5 m
+    I8  = 3 m
+    I11 = 30 °C
+    I13 = 1.78 m/s
+    I30 = I31 = I32 = I33 = I34 = 25 °C
+
+Resultados por superficie:
+
+    Cada pared lateral = -1777.901574 kcal/h
+    Pared superior     = -2963.169290 kcal/h
+
+Excel suma cuatro paredes laterales y una pared superior:
+
+    R39_Excel = 4*(-1777.901574) + (-2963.169290)
+    R39_Excel = -10074.775587 kcal/h
+    R39_Excel ≈ -10075 kcal/h
+
+El Word suma cuatro paredes laterales y dos veces la pared
+superior:
+
+    R39_Word = 4*(-1777.901574) + 2*(-2963.169290)
+    R39_Word = -13037.944877 kcal/h
+
+Diferencia:
+
+    R39_Word - R39_Excel = -2963.169290 kcal/h
+
+Este valor corresponde exactamente a sumar una vez más las
+pérdidas Qcs + Qrs de la pared superior.
+
+
+7. CRITERIO UTILIZADO EN AUDIT-CALCULATOR.HTML
+------------------------------------------------------------
+
+Después de confirmar que el Word es la fuente oficial, la
+implementación utiliza este criterio:
+
+    Qr = Qrf + Qrd + Qrp + Qri + 2*Qrs
+    Qc = Qcf + Qcd + Qcp + Qci + 2*Qcs
+
+Es decir, As y Ts se usan para calcular dos caras con las mismas
+condiciones: la superior y la inferior. El resultado esperado
+para el ejemplo es:
+
+    R39 = -13037.944877 kcal/h
+
+Los cálculos de los calderos cilíndrico horizontal y cilíndrico
+vertical no presentaron esta diferencia y no fueron modificados.
+
+
+CONCLUSIÓN
+------------------------------------------------------------
+
+Las dos fuentes utilizan las mismas áreas y las mismas fórmulas
+de radiación y convección. La diferencia encontrada es:
+
+    Word  = superficie superior sumada dos veces.
+    Excel = superficie superior sumada una vez.
+
+Se confirmó que el criterio correcto para la aplicación es el
+del Word. Por eso audit-calculator.html suma Qcs y Qrs dos veces,
+representando las superficies superior e inferior.
