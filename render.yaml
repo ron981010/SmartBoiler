@@ -3,8 +3,10 @@ services:
     name: enerapp
     runtime: node
     plan: free
-    buildCommand: npm install --include=dev && npm run build && npm run seed:render
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:render
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
     envVars:
       - key: JWT_SECRET
         generateValue: true

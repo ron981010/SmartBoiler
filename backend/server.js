@@ -31,14 +31,13 @@ if (!fs.existsSync(UPLOADS_DIR)) {
 if (process.env.NODE_ENV === 'production') {
   const seedDb = path.join(__dirname, 'database.db');
   if (fs.existsSync(seedDb)) {
-    const seedSize = fs.statSync(seedDb).size;
-    const destSize = fs.existsSync(DB_PATH) ? fs.statSync(DB_PATH).size : 0;
-    // Copy if destination doesn't exist or seed is larger (has more data)
-    if (!fs.existsSync(DB_PATH) || seedSize > destSize) {
+    // Only seed a brand-new data directory. Never replace a live database
+    // during a deploy, even if the repository copy is larger.
+    if (!fs.existsSync(DB_PATH)) {
       fs.copyFileSync(seedDb, DB_PATH);
-      console.log('Seeded database.db from repo (' + seedSize + ' bytes, was ' + destSize + ')');
+      console.log('Seeded database.db from repo');
     } else {
-      console.log('DB already exists (' + destSize + ' bytes), seed is ' + seedSize + ' bytes - keeping existing');
+      console.log('Database already exists - keeping persistent data');
     }
   }
   const seedUploads = path.join(__dirname, 'uploads');
